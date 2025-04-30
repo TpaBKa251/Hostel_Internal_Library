@@ -28,13 +28,14 @@ import java.util.stream.Collectors;
 /**
  * Интерцептор для метода получения сообщений по RabbitMQ
  *
- * @apiNote  использовать в {@link SimpleRabbitListenerContainerFactory#setAdviceChain(Advice...)}:
+ * <p>💡Использовать в {@link SimpleRabbitListenerContainerFactory#setAdviceChain(Advice...)}:
  * <pre><code>
  *     factory.setAdviceChain(new AmqpMessageReceiveInterceptor(tracer, openTelemetry))
  * </code></pre>
- * @since 1.0.3
+ *
  * @author Илья Лапшин
  * @version 1.0.3
+ * @since 1.0.3
  */
 @RequiredArgsConstructor
 public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
@@ -66,10 +67,11 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
     /**
      * Перехватывает метод получения/обработки сообщения, добавляет трассировку, создает {@link ExecutionContext}
      *
-     * @implNote Интерцептор прикрепляется к методу
+     * <p>Интерцептор прикрепляется к методу
      * {@link AbstractMessageListenerContainer#executeListener(Channel, Object)}
-     * @since 1.0.3
+     *
      * @author Илья Лапшин
+     * @since 1.0.3
      */
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {

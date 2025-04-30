@@ -1,0 +1,75 @@
+name: CI & Release
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      # Подхватываем креды
+      - name: Set up credentials
+        run: |
+          echo "INTERNAL_REPO_LOGIN=${{ secrets.INTERNAL_REPO_LOGIN }}" >> $GITHUB_ENV
+          echo "INTERNAL_REPO_PASSWORD=${{ secrets.INTERNAL_REPO_PASSWORD }}" >> $GITHUB_ENV
+
+      # Считаем версию
+      - name: Read version
+        id: ver
+        run: echo "VERSION=$(./gradlew -q printVersion)" >> $GITHUB_ENV
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag v${{ env.VERSION }}
+          git push origin v${{ env.VERSION }}    
+
+      # Сборка всех модулей
+      - name: Build
+        run: ./gradlew clean assemble --no-daemon
+
+      # Публикуем все модули
+      - name: Publish to Nexus
+        run: ./gradlew publish --no-daemon
+
+      # Создаем GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ env.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+
+      - name: Generate aggregated Javadoc
+        run: ./gradlew aggregateJavadoc
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/javadoc
+

@@ -1,9 +1,12 @@
+group = 'ru.tpu.hostel'
+version = '1.0.4'
+
 subprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
     group = 'ru.tpu.hostel'
-    version = '1.0.3'
+    version = '1.0.4'
 
     repositories {
         mavenCentral()
@@ -45,4 +48,24 @@ subprojects {
             }
         }
     }
+}
+
+tasks.register("printVersion") {
+    doLast { println project.version }
+}
+
+tasks.register("aggregateJavadoc", Copy) {
+    dependsOn subprojects.collect { it.tasks.named("javadoc") }
+
+    def outputDir = layout.projectDirectory.dir("docs/javadoc")
+    into outputDir
+
+    subprojects.each { proj ->
+        def javadocTask = proj.tasks.named("javadoc")
+        from(javadocTask.map { it.destinationDir }) {
+            into proj.name
+        }
+    }
+
+    includeEmptyDirs = false
 }
