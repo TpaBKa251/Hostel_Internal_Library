@@ -1,0 +1,5 @@
+rootProject.name = 'Hostel_Internal'
+include 'hostel-core'
+include 'hostel-feign'
+include 'hostel-amqp'
+include 'hostel-common'

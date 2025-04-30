@@ -1,0 +1,13 @@
+dependencies {
+    compileOnly project(':hostel-common')
+    compileOnly 'org.springframework:spring-web:6.1.12'
+    compileOnly 'org.aspectj:aspectjweaver:1.9.22'
+
+    compileOnly 'io.github.openfeign:feign-core:11.10'
+    compileOnly 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.1'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
+
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.3.5'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:3.3.5'
+}
