@@ -72,7 +72,6 @@ dependencies {
 
 - **ExecutionContext** - контекст выполнения запросов. Содержит в себе **userID, userRoles, traceID, spanID**.
   Создается в самом начале выполнения запроса/сообщения, очищается в конце в code `finally` блоке.
-
     ```java
     ExecutionContext.create(userId, roles, traceId, spanId); // или ExecutionContext.create();
 
@@ -84,10 +83,10 @@ dependencies {
         ExecutionContext.clear(); // ОБЯЗАТЕЛЬНО
     }
     ```
-
 - **Roles** - роли юзеров. Содержит статические методы для проверки прав роли на те или иные действия.
-
 - **TimeUtil** - утилита для работы с временем.
+- **ServiceException** - общее исключение сервиса. Имеет вложенные классы для всех 4хх и 5хх ошибок, названия
+  соответствуют ошибкам
 
 ## Core
 
@@ -105,8 +104,6 @@ dependencies {
 
 - **GlobalExceptionHandler** - Глобальный обработчик исключений. Обрабатывает **ServiceException,
   DataIntegrityViolationException и ConstraintViolationException**, а также любые другие в общем виде
-- **ServiceException** - общее исключение сервиса. Имеет вложенные классы для всех 4хх и 5хх ошибок, названия
-  соответствуют ошибкам
 - **RepositoryLoggingFilter** - аспект для логирования репозиторных методов классов, в названии которых есть
   **_Repository_**, в пакете **_repository_**
 - **ServiceLoggingFilter** - аспект для логирования сервисных методов классов в пакете **_service_**

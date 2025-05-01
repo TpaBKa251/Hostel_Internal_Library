@@ -1,4 +1,4 @@
-package ru.tpu.hostel.internal.common.exception;
+package ru.tpu.hostel.internal.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -33,8 +33,8 @@ import org.springframework.http.HttpStatus;
  * </code></pre>
  *
  * @author Лапшин Илья
- * @version 1.0.3
- * @since 1.0.0
+ * @version 1.0.4
+ * @since 1.0.4
  */
 @Getter
 public class ServiceException extends RuntimeException {

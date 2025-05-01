@@ -14,8 +14,6 @@
 
 - **GlobalExceptionHandler** - Глобальный обработчик исключений. Обрабатывает **ServiceException,
   DataIntegrityViolationException и ConstraintViolationException**, а также любые другие в общем виде
-- **ServiceException** - общее исключение сервиса. Имеет вложенные классы для всех 4хх и 5хх ошибок, названия
-  соответствуют ошибкам
 - **RepositoryLoggingFilter** - аспект для логирования репозиторных методов классов, в названии которых есть
   **_Repository_**, в пакете **_repository_**
 - **ServiceLoggingFilter** - аспект для логирования сервисных методов классов в пакете **_service_**

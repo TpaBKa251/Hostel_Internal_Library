@@ -38,7 +38,7 @@ public class AmqpMessageSenderLoggingFilter {
             .enable(SerializationFeature.INDENT_OUTPUT)
             .writer();
 
-    @Around("execution(* ru.tpu.hostel.booking.external.amqp.AmqpMessageSender.send(..))")
+    @Around("execution(* ru.tpu.hostel..external.amqp.AmqpMessageSender.send(..))")
     public Object logSendMessage(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
         String messageId = (String) args[0];
@@ -79,7 +79,7 @@ public class AmqpMessageSenderLoggingFilter {
         }
     }
 
-    @Around("execution(* ru.tpu.hostel.booking.external.amqp.AmqpMessageSender.sendAndReceive(..))")
+    @Around("execution(* ru.tpu.hostel..external.amqp.AmqpMessageSender.sendAndReceive(..))")
     public Object logSendAndReceive(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
         String messageId = (String) args[0];
