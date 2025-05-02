@@ -25,7 +25,7 @@ import static ru.tpu.hostel.internal.utils.TimeUtil.getLocalDateTimeStingFromMil
 /**
  * Аспект для логирования сендеров RabbitMQ
  */
-@Aspect
+//@Aspect
 @Component
 @Slf4j
 public class AmqpMessageSenderLoggingFilter {
@@ -46,7 +46,7 @@ public class AmqpMessageSenderLoggingFilter {
         String payloadJson = safeMapToJson(messagePayload);
 
         if (args.length == 3) {
-           String routingKey = (String) args[2];
+            String routingKey = (String) args[2];
             log.info(START_RABBIT_SENDING_METHOD_VIA_ROUTING_KEY_EXECUTION, routingKey, messageId, payloadJson);
         } else {
             log.info(START_RABBIT_SENDING_METHOD_EXECUTION, messageId, payloadJson);

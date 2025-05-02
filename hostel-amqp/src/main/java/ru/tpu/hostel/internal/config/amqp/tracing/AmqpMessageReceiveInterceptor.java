@@ -25,6 +25,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
+
 /**
  * Интерцептор для метода получения сообщений по RabbitMQ
  *
@@ -34,15 +37,11 @@ import java.util.stream.Collectors;
  * </code></pre>
  *
  * @author Илья Лапшин
- * @version 1.0.3
+ * @version 1.0.4
  * @since 1.0.3
  */
 @RequiredArgsConstructor
-public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
-
-    private static final String USER_ID_HEADER = "X-User-Id";
-
-    private static final String ROLES_HEADER = "X-User-Roles";
+class AmqpMessageReceiveInterceptor implements MethodInterceptor {
 
     private final Tracer tracer;
 
@@ -130,7 +129,7 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
     }
 
     private Set<Roles> getRoles(MessageProperties properties) {
-        String rolesString = properties.getHeader(ROLES_HEADER);
+        String rolesString = properties.getHeader(USER_ROLES_HEADER);
         return rolesString == null || rolesString.isEmpty()
                 ? Collections.emptySet()
                 : Arrays.stream(rolesString.split(","))

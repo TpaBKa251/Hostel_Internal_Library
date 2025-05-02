@@ -19,21 +19,20 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
+
 /**
  * Интерцептор для создания {@link ExecutionContext} на старте выполнения запроса и очистке контекста по завершении
  * обработки запроса
  *
  * @author Илья Лапшин
- * @version 1.0.3
+ * @version 1.0.4
  * @since 1.0.0
  */
 @SuppressWarnings("NullableProblems")
 @Configuration
 public class HttpRestInterceptor {
-
-    private static final String USER_ID_HEADER = "X-User-Id";
-
-    private static final String ROLES_HEADER = "X-User-Roles";
 
     @Bean
     public OncePerRequestFilter executionContextFilter() {
@@ -49,17 +48,8 @@ public class HttpRestInterceptor {
                 String traceId = sc.isValid() ? sc.getTraceId() : null;
                 String spanId = sc.isValid() ? sc.getSpanId() : null;
 
-                String userIdString = request.getHeader(USER_ID_HEADER);
-                String rolesString = request.getHeader(ROLES_HEADER);
-
-                UUID userId = userIdString == null || userIdString.isEmpty()
-                        ? null
-                        : UUID.fromString(userIdString);
-                Set<Roles> roles = rolesString == null || rolesString.isEmpty()
-                        ? Collections.emptySet()
-                        : Arrays.stream(rolesString.split(","))
-                        .map(Roles::valueOf)
-                        .collect(Collectors.toUnmodifiableSet());
+                UUID userId = getUserId(request);
+                Set<Roles> roles = getRoles(request);
 
                 ExecutionContext.create(userId, roles, traceId, spanId);
                 try {
@@ -69,5 +59,21 @@ public class HttpRestInterceptor {
                 }
             }
         };
+    }
+
+    private UUID getUserId(HttpServletRequest request) {
+        String userIdString = request.getHeader(USER_ID_HEADER);
+        return userIdString == null || userIdString.isEmpty()
+                ? null
+                : UUID.fromString(userIdString);
+    }
+
+    private Set<Roles> getRoles(HttpServletRequest request) {
+        String rolesString = request.getHeader(USER_ROLES_HEADER);
+        return rolesString == null || rolesString.isEmpty()
+                ? Collections.emptySet()
+                : Arrays.stream(rolesString.split(","))
+                .map(Roles::valueOf)
+                .collect(Collectors.toUnmodifiableSet());
     }
 }

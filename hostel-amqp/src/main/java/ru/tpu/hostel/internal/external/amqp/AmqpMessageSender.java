@@ -1,17 +1,46 @@
 package ru.tpu.hostel.internal.external.amqp;
 
-import java.io.IOException;
+import ru.tpu.hostel.internal.exception.ServiceException;
 
 public interface AmqpMessageSender {
 
-    <T extends Enum<?> & AmqpMessageType> void send(T messageType, String messageId, Object messagePayload)
-            throws IOException;
+    void send(Enum<?> messageType, String messageId, Object messagePayload);
 
-    <T extends Enum<?> & AmqpMessageType, R> R sendAndReceive(
-            T messageType,
+    <R> R sendAndReceive(Enum<?> messageType, String messageId, Object messagePayload, Class<R> responseType);
+
+    default void send(Microservice microservice, String routingKey, String messageId, Object messagePayload) {
+        throw new ServiceException.NotImplemented();
+    }
+
+    default void send(
+            Microservice microservice,
+            String exchange,
+            String routingKey,
+            String messageId,
+            Object messagePayload
+    ) {
+        throw new ServiceException.NotImplemented();
+    }
+
+    default <R> R sendAndReceive(
+            Microservice microservice,
+            String routingKey,
             String messageId,
             Object messagePayload,
             Class<R> responseType
-    ) throws IOException;
+    ) {
+        throw new ServiceException.NotImplemented();
+    }
+
+    default <R> R sendAndReceive(
+            Microservice microservice,
+            String exchange,
+            String routingKey,
+            String messageId,
+            Object messagePayload,
+            Class<R> responseType
+    ) {
+        throw new ServiceException.NotImplemented();
+    }
 
 }
