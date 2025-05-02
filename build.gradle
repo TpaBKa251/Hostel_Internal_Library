@@ -57,7 +57,7 @@ tasks.register("printVersion") {
 tasks.register("aggregateJavadoc", Copy) {
     dependsOn subprojects.collect { it.tasks.named("javadoc") }
 
-    def outputDir = layout.projectDirectory.dir("docs/javadoc")
+    def outputDir = layout.projectDirectory.dir("docs/javadoc").asFile
     into outputDir
 
     subprojects.each { proj ->
@@ -65,6 +65,10 @@ tasks.register("aggregateJavadoc", Copy) {
         from(javadocTask.map { it.destinationDir }) {
             into proj.name
         }
+    }
+
+    from("index.html") {
+        into(".")
     }
 
     includeEmptyDirs = false
