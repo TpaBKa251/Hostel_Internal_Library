@@ -1,0 +1,5 @@
+ru.tpu.hostel.internal
+ru.tpu.hostel.internal.common.exception
+ru.tpu.hostel.internal.common.logging
+ru.tpu.hostel.internal.config.otlp
+ru.tpu.hostel.internal.config.rest

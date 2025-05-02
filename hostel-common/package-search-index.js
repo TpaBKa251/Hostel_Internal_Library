@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"ru.tpu.hostel.internal.exception"},{"l":"ru.tpu.hostel.internal.utils"}];updateSearchResults();
