@@ -5,25 +5,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.tpu.hostel.internal.utils.ExecutionContext;
 
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_HEADER;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_PATTERN;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
+
 /**
  * Интерцептор для добавления в заголовок REST запросов, которые отправляются через Feign клиент, информации о
  * трассировке
  *
  * @author Илья Лапшин
- * @version 1.0.0
+ * @version 1.0.4
  * @see ExecutionContext
  * @since 1.0.0
  */
 @Configuration
 public class HttpRestInterceptor {
-
-    private static final String USER_ID_HEADER = "X-User-Id";
-
-    private static final String ROLES_HEADER = "X-User-Roles";
-
-    private static final String TRACEPARENT_HEADER = "traceparent";
-
-    private static final String TRACEPARENT_PATTERN = "00-%s-%s-01";
 
     @Bean
     public RequestInterceptor tracingHttpRequestInterceptor() {
@@ -36,7 +33,7 @@ public class HttpRestInterceptor {
             );
             requestTemplate.header(TRACEPARENT_HEADER, traceparent);
             requestTemplate.header(USER_ID_HEADER, context.getUserID().toString());
-            requestTemplate.header(ROLES_HEADER, context.getUserRoles().toString());
+            requestTemplate.header(USER_ROLES_HEADER, context.getUserRoles().toString());
         };
     }
 

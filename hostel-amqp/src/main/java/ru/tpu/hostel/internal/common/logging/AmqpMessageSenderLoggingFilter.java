@@ -25,7 +25,7 @@ import static ru.tpu.hostel.internal.utils.TimeUtil.getLocalDateTimeStingFromMil
 /**
  * Аспект для логирования сендеров RabbitMQ
  */
-@Aspect
+//@Aspect
 @Component
 @Slf4j
 public class AmqpMessageSenderLoggingFilter {
@@ -38,7 +38,7 @@ public class AmqpMessageSenderLoggingFilter {
             .enable(SerializationFeature.INDENT_OUTPUT)
             .writer();
 
-    @Around("execution(* ru.tpu.hostel.booking.external.amqp.AmqpMessageSender.send(..))")
+    @Around("execution(* ru.tpu.hostel..external.amqp.AmqpMessageSender.send(..))")
     public Object logSendMessage(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
         String messageId = (String) args[0];
@@ -46,7 +46,7 @@ public class AmqpMessageSenderLoggingFilter {
         String payloadJson = safeMapToJson(messagePayload);
 
         if (args.length == 3) {
-           String routingKey = (String) args[2];
+            String routingKey = (String) args[2];
             log.info(START_RABBIT_SENDING_METHOD_VIA_ROUTING_KEY_EXECUTION, routingKey, messageId, payloadJson);
         } else {
             log.info(START_RABBIT_SENDING_METHOD_EXECUTION, messageId, payloadJson);
@@ -79,7 +79,7 @@ public class AmqpMessageSenderLoggingFilter {
         }
     }
 
-    @Around("execution(* ru.tpu.hostel.booking.external.amqp.AmqpMessageSender.sendAndReceive(..))")
+    @Around("execution(* ru.tpu.hostel..external.amqp.AmqpMessageSender.sendAndReceive(..))")
     public Object logSendAndReceive(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
         String messageId = (String) args[0];

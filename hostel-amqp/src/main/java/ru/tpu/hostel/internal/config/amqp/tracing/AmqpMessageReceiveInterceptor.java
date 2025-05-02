@@ -25,23 +25,23 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
+
 /**
  * Интерцептор для метода получения сообщений по RabbitMQ
  *
- * @apiNote  использовать в {@link SimpleRabbitListenerContainerFactory#setAdviceChain(Advice...)}:
+ * <p>💡Использовать в {@link SimpleRabbitListenerContainerFactory#setAdviceChain(Advice...)}:
  * <pre><code>
  *     factory.setAdviceChain(new AmqpMessageReceiveInterceptor(tracer, openTelemetry))
  * </code></pre>
- * @since 1.0.3
+ *
  * @author Илья Лапшин
- * @version 1.0.3
+ * @version 1.0.4
+ * @since 1.0.3
  */
 @RequiredArgsConstructor
-public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
-
-    private static final String USER_ID_HEADER = "X-User-Id";
-
-    private static final String ROLES_HEADER = "X-User-Roles";
+class AmqpMessageReceiveInterceptor implements MethodInterceptor {
 
     private final Tracer tracer;
 
@@ -66,10 +66,11 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
     /**
      * Перехватывает метод получения/обработки сообщения, добавляет трассировку, создает {@link ExecutionContext}
      *
-     * @implNote Интерцептор прикрепляется к методу
+     * <p>Интерцептор прикрепляется к методу
      * {@link AbstractMessageListenerContainer#executeListener(Channel, Object)}
-     * @since 1.0.3
+     *
      * @author Илья Лапшин
+     * @since 1.0.3
      */
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
@@ -128,7 +129,7 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
     }
 
     private Set<Roles> getRoles(MessageProperties properties) {
-        String rolesString = properties.getHeader(ROLES_HEADER);
+        String rolesString = properties.getHeader(USER_ROLES_HEADER);
         return rolesString == null || rolesString.isEmpty()
                 ? Collections.emptySet()
                 : Arrays.stream(rolesString.split(","))
