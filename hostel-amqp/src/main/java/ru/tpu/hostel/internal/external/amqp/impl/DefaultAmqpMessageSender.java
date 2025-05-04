@@ -96,7 +96,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
             MessageProperties messageProperties = getReplyMessageProperties(properties);
             Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
-            amqpMessagingConfig.rabbitTemplate().send(messageProperties.getReplyTo(), message);
+            amqpMessagingConfig.rabbitTemplate().send("", messageProperties.getReplyTo(), message);
         } catch (AmqpException e) {
             throw new ServiceException.ServiceUnavailable(SENDING_MESSAGE_ERROR, e);
         } catch (IOException e) {
