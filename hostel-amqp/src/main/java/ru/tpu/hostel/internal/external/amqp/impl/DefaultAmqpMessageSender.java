@@ -214,7 +214,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
                 .setCorrelationId(UUID.randomUUID().toString())
                 .setTimestamp(new Date(nowMillis))
                 .setHeader(USER_ID_HEADER, context.getUserID())
-                .setHeader(USER_ROLES_HEADER, context.getUserRoles())
+                .setHeader(USER_ROLES_HEADER, context.getUserRoles().toString().replace("[", "").replace("]", "").replaceAll(" ", ""))
                 .setHeader(TRACEPARENT_HEADER, traceparent)
                 .build();
     }
