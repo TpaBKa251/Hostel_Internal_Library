@@ -25,6 +25,8 @@ import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_HEADER;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_PATTERN;
 import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
 import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
 
@@ -205,6 +207,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         ZonedDateTime now = TimeUtil.getZonedDateTime();
         long nowMillis = now.toInstant().toEpochMilli();
         ExecutionContext context = ExecutionContext.get();
+        String traceparent = String.format(TRACEPARENT_PATTERN, context.getTraceId(), context.getSpanId());
 
         return MessagePropertiesBuilder.fromProperties(messageProperties)
                 .setMessageId(messageId)
@@ -212,6 +215,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
                 .setTimestamp(new Date(nowMillis))
                 .setHeader(USER_ID_HEADER, context.getUserID())
                 .setHeader(USER_ROLES_HEADER, context.getUserRoles())
+                .setHeader(TRACEPARENT_HEADER, traceparent)
                 .build();
     }
 
