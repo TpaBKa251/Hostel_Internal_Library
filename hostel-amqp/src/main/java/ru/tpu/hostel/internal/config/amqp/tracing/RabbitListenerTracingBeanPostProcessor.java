@@ -5,17 +5,12 @@ import io.opentelemetry.api.trace.Tracer;
 import lombok.RequiredArgsConstructor;
 import org.aopalliance.aop.Advice;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Role;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-@Configuration
 @RequiredArgsConstructor
-@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class RabbitListenerTracingBeanPostProcessor implements BeanPostProcessor {
 
     private final Tracer tracer;

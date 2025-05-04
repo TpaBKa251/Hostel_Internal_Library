@@ -90,6 +90,21 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         }
     }
 
+    @Override
+    public void sendReply(Enum<?> messageType, MessageProperties properties, Object messagePayload) {
+        try {
+            AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
+            MessageProperties messageProperties = getReplyMessageProperties(properties);
+            Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
+            amqpMessagingConfig.rabbitTemplate().send(message);
+        } catch (AmqpException e) {
+            throw new ServiceException.ServiceUnavailable(SENDING_MESSAGE_ERROR, e);
+        } catch (IOException e) {
+            throw new ServiceException.InternalServerError(SERIALIZATION_OR_DESERIALIZATION_ERROR, e);
+        }
+    }
+
+    @Override
     public void send(Microservice microservice, String routingKey, String messageId, Object messagePayload) {
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
@@ -106,6 +121,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         }
     }
 
+    @Override
     public void send(
             Microservice microservice,
             String exchange,
@@ -128,6 +144,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         }
     }
 
+    @Override
     public <R> R sendAndReceive(
             Microservice microservice,
             String routingKey,
@@ -156,6 +173,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         }
     }
 
+    @Override
     public <R> R sendAndReceive(
             Microservice microservice,
             String exchange,
@@ -216,6 +234,15 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
                 .setHeader(USER_ID_HEADER, context.getUserID())
                 .setHeader(USER_ROLES_HEADER, context.getUserRoles().toString().replace("[", "").replace("]", "").replaceAll(" ", ""))
                 .setHeader(TRACEPARENT_HEADER, traceparent)
+                .build();
+    }
+
+    private MessageProperties getReplyMessageProperties(MessageProperties messageProperties) {
+        ZonedDateTime now = TimeUtil.getZonedDateTime();
+        long nowMillis = now.toInstant().toEpochMilli();
+
+        return MessagePropertiesBuilder.fromProperties(messageProperties)
+                .setTimestamp(new Date(nowMillis))
                 .build();
     }
 

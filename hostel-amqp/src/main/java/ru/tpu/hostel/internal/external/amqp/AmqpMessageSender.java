@@ -1,5 +1,6 @@
 package ru.tpu.hostel.internal.external.amqp;
 
+import org.springframework.amqp.core.MessageProperties;
 import ru.tpu.hostel.internal.exception.ServiceException;
 
 public interface AmqpMessageSender {
@@ -7,6 +8,8 @@ public interface AmqpMessageSender {
     void send(Enum<?> messageType, String messageId, Object messagePayload);
 
     <R> R sendAndReceive(Enum<?> messageType, String messageId, Object messagePayload, Class<R> responseType);
+
+    void sendReply(Enum<?> messageType, MessageProperties properties, Object messagePayload);
 
     default void send(Microservice microservice, String routingKey, String messageId, Object messagePayload) {
         throw new ServiceException.NotImplemented();
