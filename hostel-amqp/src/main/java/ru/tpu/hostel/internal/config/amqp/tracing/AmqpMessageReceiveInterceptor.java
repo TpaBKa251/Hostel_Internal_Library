@@ -41,7 +41,7 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
  * @since 1.0.3
  */
 @RequiredArgsConstructor
-class AmqpMessageReceiveInterceptor implements MethodInterceptor {
+public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
 
     private final Tracer tracer;
 
