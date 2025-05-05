@@ -66,6 +66,27 @@ public enum Roles {
      */
     private final ResourceType assignedResourceType;
 
+    public static boolean isRoleHigherThan(Roles role1, Roles role2) {
+        if (role1 == null || role2 == null) {
+            return false;
+        }
+        return role1.getDepth() < role2.getDepth();
+    }
+
+    public static boolean isRoleHigherThan(Collection<Roles> roles1, Collection<Roles> roles2) {
+        if (roles1 == null || roles2 == null || roles1.isEmpty() || roles2.isEmpty()) {
+            return false;
+        }
+
+        Roles seniorRole1 = getSeniorRole(roles1);
+        Roles seniorRole2 = getSeniorRole(roles2);
+        return isRoleHigherThan(seniorRole1, seniorRole2);
+    }
+
+    public static boolean isRoleHigherThan(Roles[] roles1, Roles[] roles2) {
+        return isRoleHigherThan(Arrays.asList(roles1), Arrays.asList(roles2));
+    }
+
     /**
      * Проверят, может ли хоть одна из ролей коллекции быть назначена в качестве ответственного/управляющего ресурсом
      *
@@ -74,16 +95,20 @@ public enum Roles {
      * @return разрешение на назначение
      */
     public static boolean canBeAssignedToResourceType(Collection<Roles> roles, ResourceType targetResourceType) {
-        if (
-                roles == null || roles.isEmpty() ||
-                        targetResourceType == null ||
-                        roles.contains(Roles.ADMINISTRATION) ||
-                        (roles.contains(Roles.HOSTEL_SUPERVISOR) && targetResourceType.equals(ResourceType.INTERNET))
-        ) {
+        if (roles == null
+                || roles.isEmpty()
+                || targetResourceType == null
+                || roles.contains(Roles.ADMINISTRATION)
+                || (!roles.contains(Roles.RESPONSIBLE_INTERNET) && targetResourceType.equals(ResourceType.INTERNET))) {
             return false;
         }
 
-        return roles.stream().anyMatch(role -> role.canBeAssignedToResourceType(targetResourceType));
+        Roles seniorRole = getSeniorRole(roles);
+        if (seniorRole == null) {
+            return false;
+        }
+
+        return seniorRole.canBeAssignedToResourceType(targetResourceType);
     }
 
     /**
@@ -219,13 +244,7 @@ public enum Roles {
             return false;
         }
 
-        Roles seniorRole = getSeniorRole(roles);
-        if (seniorRole == null) {
-            return false;
-        } else if (seniorRole.equals(HOSTEL_SUPERVISOR) && !targetResourceType.equals(ResourceType.INTERNET)) {
-            return true;
-        }
-        return seniorRole.hasPermissionToManageResourceType(targetResourceType);
+        return roles.stream().anyMatch(role -> role.hasPermissionToManageResourceType(targetResourceType));
     }
 
     /**
