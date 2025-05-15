@@ -1,6 +1,6 @@
 ru.tpu.hostel.internal
 ru.tpu.hostel.internal.common.logging
 ru.tpu.hostel.internal.config.amqp
-ru.tpu.hostel.internal.config.amqp.tracing
+ru.tpu.hostel.internal.config.amqp.interceptor
 ru.tpu.hostel.internal.external.amqp
 ru.tpu.hostel.internal.external.amqp.impl
