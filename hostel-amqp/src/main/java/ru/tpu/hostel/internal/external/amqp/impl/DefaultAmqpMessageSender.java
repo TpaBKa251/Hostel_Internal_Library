@@ -30,6 +30,14 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_PATTERN;
 import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
 import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
 
+/**
+ * Дефолтная реализация интерфейса {@link AmqpMessageSender}. Можно использовать везде и всюду, необходимо лишь написать
+ * бины конфигов для отправки {@link AmqpMessagingConfig}
+ *
+ * @author Илья Лапшин
+ * @version 1.0.10
+ * @since 1.0.7
+ */
 @Service
 @Primary
 @RequiredArgsConstructor
