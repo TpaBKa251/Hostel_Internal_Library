@@ -68,7 +68,7 @@ public class GlobalExceptionHandler {
         } else if (ex instanceof MethodValidationException mve) {
             mve.getAllValidationResults().forEach(vr -> {
                 String field = vr.getMethodParameter().getParameterName();
-                String message = vr.getResolvableErrors().getFirst().getDefaultMessage();
+                String message = vr.getResolvableErrors().get(0).getDefaultMessage();
                 errors.computeIfAbsent(field, ignore -> new ArrayList<>()).add(message);
             });
         }
