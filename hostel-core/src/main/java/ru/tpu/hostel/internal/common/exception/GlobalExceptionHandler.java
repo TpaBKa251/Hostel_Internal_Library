@@ -63,13 +63,13 @@ public class GlobalExceptionHandler {
             cve.getConstraintViolations().forEach(violation -> {
                 String field = violation.getPropertyPath().toString();
                 String message = violation.getMessage();
-                errors.computeIfAbsent(field, _ -> new ArrayList<>()).add(message);
+                errors.computeIfAbsent(field, ignore -> new ArrayList<>()).add(message);
             });
         } else if (ex instanceof MethodValidationException mve) {
             mve.getAllValidationResults().forEach(vr -> {
                 String field = vr.getMethodParameter().getParameterName();
                 String message = vr.getResolvableErrors().getFirst().getDefaultMessage();
-                errors.computeIfAbsent(field, _ -> new ArrayList<>()).add(message);
+                errors.computeIfAbsent(field, ignore -> new ArrayList<>()).add(message);
             });
         }
 
