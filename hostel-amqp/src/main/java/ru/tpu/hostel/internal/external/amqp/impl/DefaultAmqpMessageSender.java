@@ -47,6 +47,8 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
 
     private static final String SERIALIZATION_OR_DESERIALIZATION_ERROR
             = "Ошибка сериализации/десериализации сообщения RabbitMQ";
+    
+    private static final String EMPTY_RESPONSE_ERROR = "Ответ пустой";
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
@@ -87,7 +89,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             Message response = amqpMessagingConfig.rabbitTemplate().sendAndReceive(message);
 
             if (response == null || response.getBody() == null || response.getBody().length == 0) {
-                throw new ServiceException.ServiceUnavailable("Ответ пустой");
+                throw new ServiceException.ServiceUnavailable(EMPTY_RESPONSE_ERROR);
             }
 
             return MAPPER.readValue(response.getBody(), responseType);
@@ -170,7 +172,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             Message response = amqpMessagingConfig.rabbitTemplate().sendAndReceive(routingKey, message);
 
             if (response == null || response.getBody() == null || response.getBody().length == 0) {
-                throw new ServiceException.ServiceUnavailable("Ответ пустой");
+                throw new ServiceException.ServiceUnavailable(EMPTY_RESPONSE_ERROR);
             }
 
             return MAPPER.readValue(response.getBody(), responseType);
@@ -200,7 +202,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             Message response = amqpMessagingConfig.rabbitTemplate().sendAndReceive(exchange, routingKey, message);
 
             if (response == null || response.getBody() == null || response.getBody().length == 0) {
-                throw new ServiceException.ServiceUnavailable("Ответ пустой");
+                throw new ServiceException.ServiceUnavailable(EMPTY_RESPONSE_ERROR);
             }
 
             return MAPPER.readValue(response.getBody(), responseType);

@@ -6,11 +6,12 @@ import ru.tpu.hostel.internal.external.amqp.impl.DefaultAmqpMessageSender;
 
 /**
  * Интерфейс для отправки сообщений через RabbitMQ. Имеет дефолтную универсальную реализацию
- * {@link DefaultAmqpMessageSender}
+ * {@link DefaultAmqpMessageSender}.
  * <p>
  * Примеры использования:
+ * </p>
  * <ul>
- * <li>RPC отправка {@link #sendAndReceive(Enum, String, Object, Class)}</li>
+ * <li>RPC-отправка с получением ответа {@link #sendAndReceive(Enum, String, Object, Class)}:
  * <pre>{@code
  * ScheduleResponse scheduleResponse = amqpMessageSender.sendAndReceive(
  *         ScheduleMessageType.BOOK,
@@ -19,7 +20,8 @@ import ru.tpu.hostel.internal.external.amqp.impl.DefaultAmqpMessageSender;
  *         ScheduleResponse.class
  * );
  * }</pre>
- * <li>Асинхронная отправка {@link #send(Enum, String, Object)}</li>
+ * </li>
+ * <li>Асинхронная отправка сообщения {@link #send(Enum, String, Object)}:
  * <pre>{@code
  * amqpMessageSender.send(
  *         ScheduleMessageType.CANCEL,
@@ -27,15 +29,17 @@ import ru.tpu.hostel.internal.external.amqp.impl.DefaultAmqpMessageSender;
  *         bookingToCancel.getTimeSlot()
  * );
  * }</pre>
- * <li>Асинхронная отправка ответа {@link #sendReply(Enum, MessageProperties, Object)}</li>
+ * </li>
+ * <li>Асинхронная отправка ответа {@link #sendReply(Enum, MessageProperties, Object)}:
  * <pre>{@code
  * @RabbitListener(queues = "${queueing.timeslots.queueName}", containerFactory = TIMESLOT_LISTENER)
  * public void receiveTimeslotMessage(Message message) {
- *     MessageProperties messageProperties = message.getMessageProperties(); // Обязательно нужны свойства полученного сообщения
+ *     MessageProperties messageProperties = message.getMessageProperties();
  *     ScheduleResponse timeSlotResponse = ScheduleResponseMapper.mapTimeslotResponse(timeSlot);
  *     amqpMessageSender.sendReply(TimeslotMessageType.BOOK_REPLY, messageProperties, timeSlotResponse);
  * }
  * }</pre>
+ * </li>
  * </ul>
  *
  * @author Илья Лапшин
