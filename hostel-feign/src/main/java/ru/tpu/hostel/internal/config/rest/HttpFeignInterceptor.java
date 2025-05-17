@@ -1,6 +1,7 @@
 package ru.tpu.hostel.internal.config.rest;
 
 import feign.RequestInterceptor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.tpu.hostel.internal.utils.ExecutionContext;
@@ -19,13 +20,16 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
  * @see ExecutionContext
  * @since 1.0.0
  */
+@Slf4j
 @Configuration
-public class HttpRestInterceptor {
+public class HttpFeignInterceptor {
 
     @Bean
     public RequestInterceptor tracingHttpRequestInterceptor() {
+        log.info("Starting tracing request interceptor for Feign");
         return requestTemplate -> {
             ExecutionContext context = ExecutionContext.get();
+            log.info("{}", context);
             String traceparent = String.format(
                     TRACEPARENT_PATTERN,
                     context.getTraceId(),
