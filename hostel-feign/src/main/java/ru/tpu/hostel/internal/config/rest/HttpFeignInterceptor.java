@@ -38,7 +38,7 @@ public class HttpFeignInterceptor {
                 requestTemplate.header(USER_ID_HEADER, context.getUserID().toString());
             }
             if (context.getUserRoles() != null && !context.getUserRoles().isEmpty()) {
-                requestTemplate.header(USER_ROLES_HEADER, context.getUserRoles().toString());
+                requestTemplate.header(USER_ROLES_HEADER, context.getUserRoles().toString().replace("[", "").replace("]", "").replaceAll(" ", ""));
             }
         };
     }

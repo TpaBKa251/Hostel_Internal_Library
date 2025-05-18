@@ -61,7 +61,7 @@ public class HttpRestInterceptor {
                     MDC.put("userId", userId.toString());
                 }
                 if (roles != null && !roles.isEmpty()) {
-                    MDC.put("roles", roles.stream().map(Roles::name).collect(Collectors.joining(", ")));
+                    MDC.put("roles", roles.stream().map(Roles::name).collect(Collectors.joining(",")));
                 }
 
                 ExecutionContext.create(userId, roles, traceId, spanId);
