@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,12 +29,17 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
  * обработки запроса
  *
  * @author Илья Лапшин
- * @version 1.1.2
+ * @version 1.2.0
  * @since 1.0.0
  */
 @SuppressWarnings("NullableProblems")
 @Configuration
+@Slf4j
 public class HttpRestInterceptor {
+
+    private static final String START_CONTROLLER_METHOD_EXECUTION = "[REQUEST] {} {}";
+
+    private static final String FINISH_CONTROLLER_METHOD_EXECUTION = "[RESPONSE] Статус: {}. Время выполнения: {} мс";
 
     @Bean
     public OncePerRequestFilter executionContextFilter() {
@@ -60,7 +66,11 @@ public class HttpRestInterceptor {
 
                 ExecutionContext.create(userId, roles, traceId, spanId);
                 try {
+                    logRequest(request);
+                    long startTime = System.currentTimeMillis();
                     filterChain.doFilter(request, response);
+                    long endTime = System.currentTimeMillis() - startTime;
+                    logResponse(response, endTime);
                 } finally {
                     ExecutionContext.clear();
                     MDC.clear();
@@ -83,5 +93,17 @@ public class HttpRestInterceptor {
                 : Arrays.stream(rolesString.split(","))
                 .map(Roles::valueOf)
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private void logRequest(HttpServletRequest request) {
+        String method = request.getMethod();
+        String requestURI = request.getRequestURI();
+
+        log.info(START_CONTROLLER_METHOD_EXECUTION, method, requestURI);
+    }
+
+    private void logResponse(HttpServletResponse response, long duration) {
+        int status = response.getStatus();
+        log.info(FINISH_CONTROLLER_METHOD_EXECUTION, status, duration);
     }
 }

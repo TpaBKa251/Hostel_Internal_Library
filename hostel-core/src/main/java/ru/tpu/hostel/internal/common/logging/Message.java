@@ -41,8 +41,4 @@ class Message {
             = "[SERVICE] Ошибка во время выполнения сервисного метода {}.{}(). "
             + "Ошибка: {}, время старта: {}, время выполнения: {} мс";
 
-    static final String START_CONTROLLER_METHOD_EXECUTION = "[REQUEST] {} {}";
-
-    static final String FINISH_CONTROLLER_METHOD_EXECUTION = "[RESPONSE] Статус: {}. Время выполнения: {} мс";
-
 }
