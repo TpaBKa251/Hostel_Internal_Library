@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -27,7 +28,7 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
  * обработки запроса
  *
  * @author Илья Лапшин
- * @version 1.0.4
+ * @version 1.1.2
  * @since 1.0.0
  */
 @SuppressWarnings("NullableProblems")
@@ -50,12 +51,19 @@ public class HttpRestInterceptor {
 
                 UUID userId = getUserId(request);
                 Set<Roles> roles = getRoles(request);
+                if (userId != null) {
+                    MDC.put("userId", userId.toString());
+                }
+                if (roles != null && !roles.isEmpty()) {
+                    MDC.put("roles", roles.stream().map(Roles::name).collect(Collectors.joining(", ")));
+                }
 
                 ExecutionContext.create(userId, roles, traceId, spanId);
                 try {
                     filterChain.doFilter(request, response);
                 } finally {
                     ExecutionContext.clear();
+                    MDC.clear();
                 }
             }
         };

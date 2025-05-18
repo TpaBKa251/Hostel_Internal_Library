@@ -16,7 +16,7 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
  * трассировке
  *
  * @author Илья Лапшин
- * @version 1.0.4
+ * @version 1.1.2
  * @see ExecutionContext
  * @since 1.0.0
  */
@@ -26,18 +26,20 @@ public class HttpFeignInterceptor {
 
     @Bean
     public RequestInterceptor tracingHttpRequestInterceptor() {
-        log.info("Starting tracing request interceptor for Feign");
         return requestTemplate -> {
             ExecutionContext context = ExecutionContext.get();
-            log.info("{}", context);
             String traceparent = String.format(
                     TRACEPARENT_PATTERN,
                     context.getTraceId(),
                     context.getSpanId()
             );
             requestTemplate.header(TRACEPARENT_HEADER, traceparent);
-            requestTemplate.header(USER_ID_HEADER, context.getUserID().toString());
-            requestTemplate.header(USER_ROLES_HEADER, context.getUserRoles().toString());
+            if (context.getUserID() != null) {
+                requestTemplate.header(USER_ID_HEADER, context.getUserID().toString());
+            }
+            if (context.getUserRoles() != null && !context.getUserRoles().isEmpty()) {
+                requestTemplate.header(USER_ROLES_HEADER, context.getUserRoles().toString());
+            }
         };
     }
 

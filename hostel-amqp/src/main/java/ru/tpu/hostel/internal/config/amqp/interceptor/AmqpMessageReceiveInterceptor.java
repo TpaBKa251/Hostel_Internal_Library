@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.slf4j.MDC;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -46,7 +47,7 @@ import static ru.tpu.hostel.internal.utils.TimeUtil.getLocalDateTimeStingFromMil
  * </code></pre>
  *
  * @author Илья Лапшин
- * @version 1.1.0
+ * @version 1.1.2
  * @since 1.0.3
  */
 @RequiredArgsConstructor
@@ -120,6 +121,12 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
 
         UUID userId = getUserId(messageProperties);
         Set<Roles> roles = getRoles(messageProperties);
+        if (userId != null) {
+            MDC.put("userId", userId.toString());
+        }
+        if (roles != null && !roles.isEmpty()) {
+            MDC.put("roles", roles.stream().map(Roles::name).collect(Collectors.joining(", ")));
+        }
 
         String queue = messageProperties.getConsumerQueue();
         Span span = tracer.spanBuilder("rabbit.receive")
@@ -134,7 +141,6 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
                 .startSpan();
 
         ExecutionContext.create(userId, roles, span.getSpanContext().getTraceId(), span.getSpanContext().getSpanId());
-
         log.info(
                 START_RABBIT_LISTENER_METHOD_EXECUTION,
                 messageProperties.getMessageId(),
@@ -159,6 +165,7 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
         } finally {
             ExecutionContext.clear();
             span.end();
+            MDC.clear();
         }
     }
 
