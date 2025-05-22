@@ -30,14 +30,14 @@ public class FeignExceptionHandler {
 
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<Map<String, String>> handleFeignException(FeignException ex) {
-        if (ex.status() >= 500) {
+        if (ex.status() >= 500 || ex.status() == 0) {
             log.error(ex.contentUTF8(), ex);
         }
-        if (ex.status() >= 200 && ex.status() < 600) {
+        if (ex.status() >= 400 && ex.status() < 500) {
             return getResponseEntity(HttpStatus.valueOf(ex.status()), mapHttpResponseErrorMessage(ex.contentUTF8()));
         }
 
-        return getResponseEntity(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        return getResponseEntity(HttpStatus.BAD_GATEWAY, "Операция временно не доступна. Попробуйте позже");
     }
 
     private ResponseEntity<Map<String, String>> getResponseEntity(HttpStatus status, String message) {
