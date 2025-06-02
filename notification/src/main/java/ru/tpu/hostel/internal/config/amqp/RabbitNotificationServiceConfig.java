@@ -50,7 +50,7 @@ public class RabbitNotificationServiceConfig {
     }
 
     @Bean(NOTIFICATION_SERVICE_CONNECTION_FACTORY)
-    public ConnectionFactory schedulesServiceConnectionFactory(RabbitNotificationServiceProperties properties) {
+    public ConnectionFactory notificationServiceConnectionFactory(RabbitNotificationServiceProperties properties) {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
         connectionFactory.setUsername(properties.username());
         connectionFactory.setPassword(properties.password());
@@ -61,7 +61,7 @@ public class RabbitNotificationServiceConfig {
     }
 
     @Bean(NOTIFICATION_SERVICE_RABBIT_TEMPLATE)
-    public RabbitTemplate schedulesServiceRabbitTemplate(
+    public RabbitTemplate notificationServiceRabbitTemplate(
             @Qualifier(NOTIFICATION_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
             @Qualifier(NOTIFICATION_SERVICE_MESSAGE_CONVERTER) MessageConverter messageConverter
     ) {
@@ -72,7 +72,7 @@ public class RabbitNotificationServiceConfig {
     }
 
     @Bean(NOTIFICATION_SERVICE_AMQP_ADMIN)
-    public AmqpAdmin schedulesServiceAmqpAdmin(
+    public AmqpAdmin notificationServiceAmqpAdmin(
             @Qualifier(NOTIFICATION_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate
     ) {
         return new RabbitAdmin(rabbitTemplate);
