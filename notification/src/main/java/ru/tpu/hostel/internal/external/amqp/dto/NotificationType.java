@@ -10,7 +10,8 @@ public enum NotificationType {
     DOCUMENT("Справки"),
     KITCHEN_SCHEDULE("Дежурство на кухне"),
     ROLE("Должность"),
-    DUTY("Дежурство");
+    DUTY("Дежурство"),
+    BOOKING("Запись");
 
     private final String notificationName;
 
