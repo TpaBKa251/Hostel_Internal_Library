@@ -21,7 +21,7 @@
 | `core`         | Основная логика библиотеки                   | [Документация](#Core)         | 1.2.2                         |
 | `feign`        | Расширение для работы с Feign                | [Документация](#Feign)        | 1.2.2                         |
 | `amqp`         | Расширение для работы с AMQP                 | [Документация](#AMQP)         | 1.2.2                         |
-| `notification` | Расширение для AMQP для отправки уведомлений | [Документация](#Notification) | 1.3.0                         |    
+| `notification` | Расширение для AMQP для отправки уведомлений | [Документация](#Notification) | 1.3.1                         |    
 
 ## Подключение
 
@@ -192,4 +192,4 @@ application.yaml/application.properties (подключение к Rabbit и с�
 - **DefaultNotificationSender** - Дефолтная реализация NotificationSender. Безопасно отправляет сообщения с ДТО
   через RabbitMQ (не кидает исключения)
 
-### [JavaDoc AMQP](https://tpabka251.github.io/Hostel_Internal_Library/notification/index.html)
+### [JavaDoc Notification](https://tpabka251.github.io/Hostel_Internal_Library/notification/index.html)

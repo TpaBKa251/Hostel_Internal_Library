@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import ru.tpu.hostel.internal.external.amqp.Microservice;
 import ru.tpu.hostel.internal.external.amqp.NotificationMessageType;
 
@@ -49,6 +50,7 @@ public class RabbitNotificationServiceConfig {
         return new Jackson2JsonMessageConverter(objectMapper);
     }
 
+    @Primary
     @Bean(NOTIFICATION_SERVICE_CONNECTION_FACTORY)
     public ConnectionFactory notificationServiceConnectionFactory(RabbitNotificationServiceProperties properties) {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
@@ -60,6 +62,7 @@ public class RabbitNotificationServiceConfig {
         return connectionFactory;
     }
 
+    @Primary
     @Bean(NOTIFICATION_SERVICE_RABBIT_TEMPLATE)
     public RabbitTemplate notificationServiceRabbitTemplate(
             @Qualifier(NOTIFICATION_SERVICE_CONNECTION_FACTORY) ConnectionFactory connectionFactory,
@@ -71,6 +74,7 @@ public class RabbitNotificationServiceConfig {
         return rabbitTemplate;
     }
 
+    @Primary
     @Bean(NOTIFICATION_SERVICE_AMQP_ADMIN)
     public AmqpAdmin notificationServiceAmqpAdmin(
             @Qualifier(NOTIFICATION_SERVICE_RABBIT_TEMPLATE) RabbitTemplate rabbitTemplate
