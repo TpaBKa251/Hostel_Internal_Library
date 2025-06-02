@@ -1,0 +1,8 @@
+ru.tpu.hostel.internal
+ru.tpu.hostel.internal.builder
+ru.tpu.hostel.internal.builder.impl
+ru.tpu.hostel.internal.config.amqp
+ru.tpu.hostel.internal.external.amqp
+ru.tpu.hostel.internal.external.amqp.dto
+ru.tpu.hostel.internal.service
+ru.tpu.hostel.internal.service.impl
