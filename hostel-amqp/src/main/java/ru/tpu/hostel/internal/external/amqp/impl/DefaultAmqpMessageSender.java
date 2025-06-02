@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.MessagePropertiesBuilder;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import ru.tpu.hostel.internal.config.amqp.AmqpMessagingConfig;
 import ru.tpu.hostel.internal.exception.ServiceException;
 import ru.tpu.hostel.internal.external.amqp.AmqpMessageSender;
@@ -21,9 +23,11 @@ import ru.tpu.hostel.internal.utils.TimeUtil;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_HEADER;
 import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_PATTERN;
@@ -47,8 +51,10 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
 
     private static final String SERIALIZATION_OR_DESERIALIZATION_ERROR
             = "Ошибка сериализации/десериализации сообщения RabbitMQ";
-    
+
     private static final String EMPTY_RESPONSE_ERROR = "Ответ пустой";
+
+    private static final String EMPTY_STRING_ERROR = "Пустая строка";
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule())
@@ -61,7 +67,8 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
     private final Set<AmqpMessagingConfig> amqpMessagingConfigs;
 
     @Override
-    public void send(Enum<?> messageType, String messageId, Object messagePayload) {
+    public void send(@NotNull Enum<?> messageType, @NotNull String messageId, @NotNull Object messagePayload) {
+        checkString(messageId);
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
             MessageProperties messageProperties = getMessageProperties(
@@ -78,7 +85,14 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
     }
 
     @Override
-    public <R> R sendAndReceive(Enum<?> messageType, String messageId, Object messagePayload, Class<R> responseType) {
+    @NotNull
+    public <R> R sendAndReceive(
+            @NotNull Enum<?> messageType,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType
+    ) {
+        checkString(messageId);
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
             MessageProperties messageProperties = getMessageProperties(
@@ -101,7 +115,11 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
     }
 
     @Override
-    public void sendReply(Enum<?> messageType, MessageProperties properties, Object messagePayload) {
+    public void sendReply(
+            @NotNull Enum<?> messageType,
+            @NotNull MessageProperties properties,
+            @NotNull Object messagePayload
+    ) {
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
             MessageProperties messageProperties = getReplyMessageProperties(properties);
@@ -115,7 +133,13 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
     }
 
     @Override
-    public void send(Microservice microservice, String routingKey, String messageId, Object messagePayload) {
+    public void send(
+            @NotNull Microservice microservice,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload
+    ) {
+        checkString(routingKey, messageId);
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
@@ -133,12 +157,13 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
 
     @Override
     public void send(
-            Microservice microservice,
-            String exchange,
-            String routingKey,
-            String messageId,
-            Object messagePayload
+            @NotNull Microservice microservice,
+            @NotNull String exchange,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload
     ) {
+        checkString(exchange, routingKey, messageId);
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
@@ -155,13 +180,15 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
     }
 
     @Override
+    @NotNull
     public <R> R sendAndReceive(
-            Microservice microservice,
-            String routingKey,
-            String messageId,
-            Object messagePayload,
-            Class<R> responseType
+            @NotNull Microservice microservice,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType
     ) {
+        checkString(routingKey, messageId);
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
@@ -184,14 +211,16 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
     }
 
     @Override
+    @NotNull
     public <R> R sendAndReceive(
-            Microservice microservice,
-            String exchange,
-            String routingKey,
-            String messageId,
-            Object messagePayload,
-            Class<R> responseType
+            @NotNull Microservice microservice,
+            @NotNull String exchange,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType
     ) {
+        checkString(exchange, routingKey, messageId);
         try {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
@@ -242,7 +271,12 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
                 .setCorrelationId(UUID.randomUUID().toString())
                 .setTimestamp(new Date(nowMillis))
                 .setHeader(USER_ID_HEADER, context.getUserID())
-                .setHeader(USER_ROLES_HEADER, context.getUserRoles().toString().replace("[", "").replace("]", "").replaceAll(" ", ""))
+                .setHeader(
+                        USER_ROLES_HEADER,
+                        context.getUserRoles().stream()
+                                .map(Enum::name)
+                                .collect(Collectors.joining(","))
+                )
                 .setHeader(TRACEPARENT_HEADER, traceparent)
                 .build();
     }
@@ -254,6 +288,12 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         return MessagePropertiesBuilder.fromProperties(messageProperties)
                 .setTimestamp(new Date(nowMillis))
                 .build();
+    }
+
+    private void checkString(String... strings) {
+        if (strings == null || Arrays.stream(strings).anyMatch(s -> !StringUtils.hasText(s))) {
+            throw new ServiceException.InternalServerError(EMPTY_STRING_ERROR);
+        }
     }
 
 }

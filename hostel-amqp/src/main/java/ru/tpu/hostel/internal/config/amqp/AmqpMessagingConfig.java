@@ -1,5 +1,6 @@
 package ru.tpu.hostel.internal.config.amqp;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import ru.tpu.hostel.internal.external.amqp.Microservice;
@@ -100,6 +101,7 @@ public interface AmqpMessagingConfig {
      *
      * @return экземпляр RabbitTemplate для отправки
      */
+    @NotNull
     RabbitTemplate rabbitTemplate();
 
     /**
@@ -134,6 +136,7 @@ public interface AmqpMessagingConfig {
      *
      * @return экземпляр MessageProperties
      */
+    @NotNull
     MessageProperties messageProperties();
 
     /**
@@ -149,6 +152,7 @@ public interface AmqpMessagingConfig {
      *
      * @return сет из Microservice
      */
+    @NotNull
     Set<Microservice> receivingMicroservices();
 
     /**

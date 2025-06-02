@@ -1,5 +1,6 @@
 package ru.tpu.hostel.internal.external.amqp;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.core.MessageProperties;
 import ru.tpu.hostel.internal.exception.ServiceException;
 import ru.tpu.hostel.internal.external.amqp.impl.DefaultAmqpMessageSender;
@@ -55,7 +56,7 @@ public interface AmqpMessageSender {
      * @param messageId      ID сообщения
      * @param messagePayload содержимое сообщения
      */
-    void send(Enum<?> messageType, String messageId, Object messagePayload);
+    void send(@NotNull Enum<?> messageType, @NotNull String messageId, @NotNull Object messagePayload);
 
     /**
      * Синхронная RPC отправка. Сразу возвращает ответ
@@ -66,7 +67,13 @@ public interface AmqpMessageSender {
      * @param responseType   класс ответа
      * @return ответ на сообщение
      */
-    <R> R sendAndReceive(Enum<?> messageType, String messageId, Object messagePayload, Class<R> responseType);
+    @NotNull
+    <R> R sendAndReceive(
+            @NotNull Enum<?> messageType,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType
+    );
 
     /**
      * Асинхронная отправка ответа. Используется на стороне получателя при RPC сообщениях. Особенность заключается в
@@ -76,7 +83,7 @@ public interface AmqpMessageSender {
      * @param properties     свойства полученного сообщения
      * @param messagePayload содержимое ответа
      */
-    void sendReply(Enum<?> messageType, MessageProperties properties, Object messagePayload);
+    void sendReply(@NotNull Enum<?> messageType, @NotNull MessageProperties properties, @NotNull Object messagePayload);
 
     /**
      * Асинхронная отправка в микросервис по ключу маршрутизации.
@@ -86,7 +93,12 @@ public interface AmqpMessageSender {
      * @param messageId      ID сообщения
      * @param messagePayload содержимое сообщения
      */
-    default void send(Microservice microservice, String routingKey, String messageId, Object messagePayload) {
+    default void send(
+            @NotNull Microservice microservice,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload
+    ) {
         throw new ServiceException.NotImplemented();
     }
 
@@ -100,11 +112,11 @@ public interface AmqpMessageSender {
      * @param messagePayload содержимое сообщения
      */
     default void send(
-            Microservice microservice,
-            String exchange,
-            String routingKey,
-            String messageId,
-            Object messagePayload
+            @NotNull Microservice microservice,
+            @NotNull String exchange,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload
     ) {
         throw new ServiceException.NotImplemented();
     }
@@ -119,12 +131,13 @@ public interface AmqpMessageSender {
      * @param responseType   класс ответа
      * @return ответ на сообщение
      */
+    @NotNull
     default <R> R sendAndReceive(
-            Microservice microservice,
-            String routingKey,
-            String messageId,
-            Object messagePayload,
-            Class<R> responseType
+            @NotNull Microservice microservice,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType
     ) {
         throw new ServiceException.NotImplemented();
     }
@@ -140,13 +153,14 @@ public interface AmqpMessageSender {
      * @param responseType   класс ответа
      * @return ответ на сообщение
      */
+    @NotNull
     default <R> R sendAndReceive(
-            Microservice microservice,
-            String exchange,
-            String routingKey,
-            String messageId,
-            Object messagePayload,
-            Class<R> responseType
+            @NotNull Microservice microservice,
+            @NotNull String exchange,
+            @NotNull String routingKey,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType
     ) {
         throw new ServiceException.NotImplemented();
     }
