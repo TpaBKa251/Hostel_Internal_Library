@@ -41,6 +41,7 @@ public class RabbitNotificationServiceConfig {
 
     private static final String NOTIFICATION_SERVICE_MESSAGE_CONVERTER = "notificationServiceMessageConverter";
 
+    @Primary
     @Bean(NOTIFICATION_SERVICE_MESSAGE_CONVERTER)
     public MessageConverter schedulesServiceMessageConverter() {
         ObjectMapper objectMapper = new ObjectMapper()
