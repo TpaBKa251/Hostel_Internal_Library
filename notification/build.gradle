@@ -1,0 +1,17 @@
+dependencies {
+    compileOnly project(':hostel-common')
+    compileOnly project(':hostel-amqp')
+    compileOnly 'org.springframework:spring-web:6.1.12'
+    compileOnly 'org.aspectj:aspectjweaver:1.9.22'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
+    compileOnly 'org.springframework.amqp:spring-rabbit:3.1.2'
+    compileOnly 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0'
+    compileOnly 'jakarta.validation:jakarta.validation-api:3.1.0'
+
+    compileOnly 'io.opentelemetry:opentelemetry-sdk:1.37.0'
+    compileOnly 'io.opentelemetry:opentelemetry-exporter-otlp:1.37.0'
+
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.3.5'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:3.3.5'
+}
