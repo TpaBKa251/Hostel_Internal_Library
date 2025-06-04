@@ -141,13 +141,14 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
                 .startSpan();
 
         ExecutionContext.create(userId, roles, span.getSpanContext().getTraceId(), span.getSpanContext().getSpanId());
-        log.info(
-                START_RABBIT_LISTENER_METHOD_EXECUTION,
-                messageProperties.getMessageId(),
-                safeMapToJson(message.getBody())
-        );
         long startTime = System.currentTimeMillis();
         try (Scope ignored = span.makeCurrent()) {
+            log.info(
+                    START_RABBIT_LISTENER_METHOD_EXECUTION,
+                    messageProperties.getMessageId(),
+                    safeMapToJson(message.getBody())
+            );
+            startTime = System.currentTimeMillis();
             Object result = invocation.proceed();
             long endTime = System.currentTimeMillis() - startTime;
             log.info(

@@ -1,3 +1,9 @@
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 dependencies {
     compileOnly project(':hostel-common')
     compileOnly project(':hostel-amqp')

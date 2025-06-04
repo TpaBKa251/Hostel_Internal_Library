@@ -43,7 +43,7 @@ public class RabbitNotificationServiceConfig {
 
     @Primary
     @Bean(NOTIFICATION_SERVICE_MESSAGE_CONVERTER)
-    public MessageConverter schedulesServiceMessageConverter() {
+    public MessageConverter notificationServiceMessageConverter() {
         ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
@@ -96,7 +96,6 @@ public class RabbitNotificationServiceConfig {
                 rabbitTemplate.setMessageConverter(messageConverter);
                 rabbitTemplate.setExchange(properties.exchangeName());
                 rabbitTemplate.setRoutingKey(properties.routingKey());
-                rabbitTemplate.setChannelTransacted(true);
                 rabbitTemplate.setObservationEnabled(true);
                 return rabbitTemplate;
             }
