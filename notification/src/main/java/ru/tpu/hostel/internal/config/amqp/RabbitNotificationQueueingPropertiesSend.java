@@ -1,18 +1,19 @@
 package ru.tpu.hostel.internal.config.amqp;
 
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "queueing.notification-service.send")
-public record RabbitNotificationQueueingPropertiesSend(
+@Data
+public class RabbitNotificationQueueingPropertiesSend {
 
-        @NotEmpty
-        String exchangeName,
+    @NotEmpty
+    private String exchangeName = "notification-exchange";
 
-        @NotEmpty
-        String routingKey
+    @NotEmpty
+    private String routingKey = "notification-send";
 
-) {
 }

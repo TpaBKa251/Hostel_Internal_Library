@@ -264,7 +264,12 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         ZonedDateTime now = TimeUtil.getZonedDateTime();
         long nowMillis = now.toInstant().toEpochMilli();
         ExecutionContext context = ExecutionContext.get();
-        String traceparent = String.format(TRACEPARENT_PATTERN, context.getTraceId(), context.getSpanId());
+        String traceparent = null;
+        if (context != null) {
+            traceparent = String.format(TRACEPARENT_PATTERN, context.getTraceId(), context.getSpanId());
+        } else {
+            context = ExecutionContext.create();
+        }
 
         return MessagePropertiesBuilder.fromProperties(messageProperties)
                 .setMessageId(messageId)

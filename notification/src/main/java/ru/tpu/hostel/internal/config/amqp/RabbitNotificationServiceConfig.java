@@ -55,11 +55,11 @@ public class RabbitNotificationServiceConfig {
     @Bean(NOTIFICATION_SERVICE_CONNECTION_FACTORY)
     public ConnectionFactory notificationServiceConnectionFactory(RabbitNotificationServiceProperties properties) {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
-        connectionFactory.setUsername(properties.username());
-        connectionFactory.setPassword(properties.password());
-        connectionFactory.setVirtualHost(properties.virtualHost());
-        connectionFactory.setAddresses(properties.addresses());
-        connectionFactory.setConnectionTimeout((int) properties.connectionTimeout().toMillis());
+        connectionFactory.setUsername(properties.getUsername());
+        connectionFactory.setPassword(properties.getPassword());
+        connectionFactory.setVirtualHost(properties.getVirtualHost());
+        connectionFactory.setAddresses(properties.getAddresses());
+        connectionFactory.setConnectionTimeout((int) properties.getConnectionTimeout().toMillis());
         return connectionFactory;
     }
 
@@ -94,8 +94,9 @@ public class RabbitNotificationServiceConfig {
             public @NotNull RabbitTemplate rabbitTemplate() {
                 RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
                 rabbitTemplate.setMessageConverter(messageConverter);
-                rabbitTemplate.setExchange(properties.exchangeName());
-                rabbitTemplate.setRoutingKey(properties.routingKey());
+                rabbitTemplate.setExchange(properties.getExchangeName());
+                rabbitTemplate.setRoutingKey(properties.getRoutingKey());
+                rabbitTemplate.setChannelTransacted(true);
                 rabbitTemplate.setObservationEnabled(true);
                 return rabbitTemplate;
             }

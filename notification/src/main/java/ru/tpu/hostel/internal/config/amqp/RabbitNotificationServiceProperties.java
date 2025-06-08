@@ -2,6 +2,7 @@ package ru.tpu.hostel.internal.config.amqp;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
 import org.springframework.validation.annotation.Validated;
@@ -11,23 +12,23 @@ import java.time.temporal.ChronoUnit;
 
 @Validated
 @ConfigurationProperties(prefix = "rabbitmq.notification-service")
-public record RabbitNotificationServiceProperties(
+@Data
+public class RabbitNotificationServiceProperties {
 
-        @NotEmpty
-        String username,
+    @NotEmpty
+    private String username = "notification";
 
-        @NotEmpty
-        String password,
+    @NotEmpty
+    private String password = "notification";
 
-        @NotEmpty
-        String virtualHost,
+    @NotEmpty
+    private String virtualHost = "notification-service";
 
-        @NotEmpty
-        String addresses,
+    @NotEmpty
+    private String addresses;
 
-        @NotNull
-        @DurationUnit(ChronoUnit.MILLIS)
-        Duration connectionTimeout
+    @NotNull
+    @DurationUnit(ChronoUnit.MILLIS)
+    private Duration connectionTimeout = Duration.of(6, ChronoUnit.SECONDS);
 
-) {
 }
