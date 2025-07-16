@@ -140,9 +140,14 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
                 )
                 .startSpan();
 
-        ExecutionContext.create(userId, roles, span.getSpanContext().getTraceId(), span.getSpanContext().getSpanId());
         long startTime = System.currentTimeMillis();
         try (Scope ignored = span.makeCurrent()) {
+            ExecutionContext.create(
+                    userId,
+                    roles,
+                    span.getSpanContext().getTraceId(),
+                    span.getSpanContext().getSpanId()
+            );
             log.info(
                     START_RABBIT_LISTENER_METHOD_EXECUTION,
                     messageProperties.getMessageId(),

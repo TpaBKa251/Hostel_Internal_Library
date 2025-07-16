@@ -39,7 +39,7 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
  * бины конфигов для отправки {@link AmqpMessagingConfig}
  *
  * @author Илья Лапшин
- * @version 1.0.10
+ * @version 1.3.5
  * @since 1.0.7
  */
 @Service
@@ -265,25 +265,33 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         long nowMillis = now.toInstant().toEpochMilli();
         ExecutionContext context = ExecutionContext.get();
         String traceparent = null;
-        if (context != null) {
-            traceparent = String.format(TRACEPARENT_PATTERN, context.getTraceId(), context.getSpanId());
-        } else {
-            context = ExecutionContext.create();
-        }
+        boolean needToClearContext = false;
+        try {
+            if (context != null) {
+                traceparent = String.format(TRACEPARENT_PATTERN, context.getTraceId(), context.getSpanId());
+            } else {
+                context = ExecutionContext.create();
+                needToClearContext = true;
+            }
 
-        return MessagePropertiesBuilder.fromProperties(messageProperties)
-                .setMessageId(messageId)
-                .setCorrelationId(UUID.randomUUID().toString())
-                .setTimestamp(new Date(nowMillis))
-                .setHeader(USER_ID_HEADER, context.getUserID())
-                .setHeader(
-                        USER_ROLES_HEADER,
-                        context.getUserRoles().stream()
-                                .map(Enum::name)
-                                .collect(Collectors.joining(","))
-                )
-                .setHeader(TRACEPARENT_HEADER, traceparent)
-                .build();
+            return MessagePropertiesBuilder.fromProperties(messageProperties)
+                    .setMessageId(messageId)
+                    .setCorrelationId(UUID.randomUUID().toString())
+                    .setTimestamp(new Date(nowMillis))
+                    .setHeader(USER_ID_HEADER, context.getUserID())
+                    .setHeader(
+                            USER_ROLES_HEADER,
+                            context.getUserRoles().stream()
+                                    .map(Enum::name)
+                                    .collect(Collectors.joining(","))
+                    )
+                    .setHeader(TRACEPARENT_HEADER, traceparent)
+                    .build();
+        } finally {
+            if (needToClearContext) {
+                ExecutionContext.clear();
+            }
+        }
     }
 
     private MessageProperties getReplyMessageProperties(MessageProperties messageProperties) {

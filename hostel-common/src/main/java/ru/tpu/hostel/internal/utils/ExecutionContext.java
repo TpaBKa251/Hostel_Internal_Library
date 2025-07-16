@@ -15,9 +15,8 @@ import java.util.UUID;
  *
  * <p>💡Создавать в самом начале выполнения запроса/сообщения, очищать в конце в {@code finally} блоке.
  * <pre><code>
- *     ExecutionContext.create(userId, roles, traceId, spanId); // или ExecutionContext.create();
- *
  *     try {
+ *         ExecutionContext.create(userId, roles, traceId, spanId); // или ExecutionContext.create();
  *         // логика выполнения
  *     } catch() {
  *         // действия при ошибке

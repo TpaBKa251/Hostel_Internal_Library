@@ -64,8 +64,8 @@ public class HttpRestInterceptor {
                     MDC.put("roles", roles.stream().map(Roles::name).collect(Collectors.joining(",")));
                 }
 
-                ExecutionContext.create(userId, roles, traceId, spanId);
                 try {
+                    ExecutionContext.create(userId, roles, traceId, spanId);
                     logRequest(request);
                     long startTime = System.currentTimeMillis();
                     filterChain.doFilter(request, response);
