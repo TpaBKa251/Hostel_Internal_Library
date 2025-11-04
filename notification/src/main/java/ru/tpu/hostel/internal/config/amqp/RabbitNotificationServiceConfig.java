@@ -96,7 +96,6 @@ public class RabbitNotificationServiceConfig {
                 rabbitTemplate.setMessageConverter(messageConverter);
                 rabbitTemplate.setExchange(properties.getExchangeName());
                 rabbitTemplate.setRoutingKey(properties.getRoutingKey());
-                rabbitTemplate.setChannelTransacted(true);
                 rabbitTemplate.setObservationEnabled(true);
                 return rabbitTemplate;
             }

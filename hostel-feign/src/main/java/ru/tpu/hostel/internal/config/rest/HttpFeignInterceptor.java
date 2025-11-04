@@ -28,6 +28,9 @@ public class HttpFeignInterceptor {
     public RequestInterceptor tracingHttpRequestInterceptor() {
         return requestTemplate -> {
             ExecutionContext context = ExecutionContext.get();
+            if (context == null) {
+                return;
+            }
             String traceparent = String.format(
                     TRACEPARENT_PATTERN,
                     context.getTraceId(),

@@ -1,4 +1,4 @@
-package ru.tpu.hostel.internal.common.logging;
+package ru.tpu.hostel.internal.utils;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,7 +13,6 @@ import java.lang.annotation.Target;
  * @author Илья Лапшин
  * @version 1.0.0
  * @see LogFilter
- * @see ServiceLoggingFilter
  * @since 1.0.0
  */
 @Target(ElementType.PARAMETER)
