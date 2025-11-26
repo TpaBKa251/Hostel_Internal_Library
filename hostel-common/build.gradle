@@ -1,9 +1,9 @@
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
 dependencies {
-    compileOnly 'org.springframework:spring-web:6.1.12'
+    compileOnly 'org.springframework:spring-web:6.2.14'
 }
