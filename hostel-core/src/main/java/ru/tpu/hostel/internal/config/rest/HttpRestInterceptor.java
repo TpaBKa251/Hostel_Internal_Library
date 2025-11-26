@@ -41,6 +41,8 @@ public class HttpRestInterceptor {
 
     private static final String FINISH_CONTROLLER_METHOD_EXECUTION = "[RESPONSE] Статус: {}. Время выполнения: {} мс";
 
+    private static final String ACTUATOR = "/actuator";
+
     @Bean
     public OncePerRequestFilter executionContextFilter() {
         return new OncePerRequestFilter() {
@@ -66,11 +68,12 @@ public class HttpRestInterceptor {
 
                 try {
                     ExecutionContext.create(userId, roles, traceId, spanId);
-                    logRequest(request);
+                    boolean needToLog = needToLog(request.getRequestURI());
+                    logRequest(request, needToLog);
                     long startTime = System.currentTimeMillis();
                     filterChain.doFilter(request, response);
                     long endTime = System.currentTimeMillis() - startTime;
-                    logResponse(response, endTime);
+                    logResponse(response, endTime, needToLog);
                 } finally {
                     ExecutionContext.clear();
                     MDC.clear();
@@ -95,15 +98,25 @@ public class HttpRestInterceptor {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
-    private void logRequest(HttpServletRequest request) {
+    private void logRequest(HttpServletRequest request, boolean needToLog) {
+        if (!needToLog) {
+            return;
+        }
         String method = request.getMethod();
         String requestURI = request.getRequestURI();
 
         log.info(START_CONTROLLER_METHOD_EXECUTION, method, requestURI);
     }
 
-    private void logResponse(HttpServletResponse response, long duration) {
+    private void logResponse(HttpServletResponse response, long duration,  boolean needToLog) {
+        if (!needToLog) {
+            return;
+        }
         int status = response.getStatus();
         log.info(FINISH_CONTROLLER_METHOD_EXECUTION, status, duration);
+    }
+
+    private boolean needToLog(String requestURI) {
+        return requestURI != null && !requestURI.startsWith(ACTUATOR);
     }
 }
