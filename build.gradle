@@ -1,12 +1,12 @@
 group = 'ru.tpu.hostel'
-version = '1.4.3'
+version = '1.4.4'
 
 subprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
     group = 'ru.tpu.hostel'
-    version = '1.4.3'
+    version = '1.4.4'
 
     repositories {
         mavenCentral()

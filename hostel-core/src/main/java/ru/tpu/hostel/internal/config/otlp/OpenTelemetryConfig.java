@@ -1,14 +1,17 @@
 package ru.tpu.hostel.internal.config.otlp;
 
 import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.SpanKind;
-import io.opentelemetry.contrib.sampler.RuleBasedRoutingSampler;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.data.LinkData;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
+import io.opentelemetry.sdk.trace.samplers.SamplingResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -16,7 +19,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * Конфигурация для настройки трассировки через Open Telemetry и ее экспорта
@@ -35,6 +40,8 @@ public class OpenTelemetryConfig {
 
     private static final String SDK_TRACER_PROVIDER = "customSdkTracerProvider";
 
+    private static final String SDK_SAMPLER = "customSdkSampler";
+
     private final OpenTelemetryProperties properties;
 
     @Bean(OTLP_SPAN_EXPORTER)
@@ -49,16 +56,61 @@ public class OpenTelemetryConfig {
         return SpanExporter.composite();
     }
 
+    @Bean(SDK_SAMPLER)
+    @Primary
+    public Sampler sdkSampler() {
+        return new Sampler() {
+
+            private final List<Pattern> excludePatterns = List.of(
+                    Pattern.compile("^/actuator.*"),
+                    Pattern.compile("^/health.*"),
+                    Pattern.compile("^/metrics.*")
+            );
+
+            @Override
+            public SamplingResult shouldSample(
+                    Context parentContext,
+                    String traceId,
+                    String name,
+                    SpanKind spanKind,
+                    Attributes attributes,
+                    List<LinkData> parentLinks) {
+
+                // Проверяем различные возможные атрибуты с путями
+                String httpTarget = attributes.get(AttributeKey.stringKey("http.target"));
+                String httpRoute = attributes.get(AttributeKey.stringKey("http.route"));
+                String urlPath = attributes.get(AttributeKey.stringKey("url.path"));
+                String httpUrl = attributes.get(AttributeKey.stringKey("http.url"));
+
+                if (shouldExclude(httpTarget) || shouldExclude(httpRoute) || shouldExclude(urlPath) || shouldExclude(httpUrl)) {
+                    return SamplingResult.drop();
+                }
+
+                return Sampler.alwaysOn().shouldSample(parentContext, traceId, name, spanKind, attributes, parentLinks);
+            }
+
+            private boolean shouldExclude(String path) {
+                if (path == null) return false;
+
+                return excludePatterns.stream()
+                        .anyMatch(pattern -> pattern.matcher(path).matches());
+            }
+
+            @Override
+            public String getDescription() {
+                return "ActuatorExcludingSampler";
+            }
+        };
+    }
+
     @Bean(SDK_TRACER_PROVIDER)
     @Primary
-    public SdkTracerProvider sdkTracerProvider(@Qualifier(OTLP_SPAN_EXPORTER) SpanExporter otlpSpanExporter) {
+    public SdkTracerProvider sdkTracerProvider(
+            @Qualifier(OTLP_SPAN_EXPORTER) SpanExporter otlpSpanExporter,
+            @Qualifier(SDK_SAMPLER) Sampler sampler
+    ) {
         return SdkTracerProvider.builder()
-                .setSampler(
-                        RuleBasedRoutingSampler.builder(SpanKind.SERVER, Sampler.alwaysOn())
-                                .drop(AttributeKey.stringKey("http.url"), "^/(actuator|health|metrics).*")
-                                .drop(AttributeKey.stringKey("url.path"), "^/(actuator|health|metrics).*")
-                                .build()
-                )
+                .setSampler(sampler)
                 .addSpanProcessor(BatchSpanProcessor.builder(otlpSpanExporter).build())
                 .setResource(Resource.getDefault().toBuilder()
                         .put("service.name", properties.serviceName())
