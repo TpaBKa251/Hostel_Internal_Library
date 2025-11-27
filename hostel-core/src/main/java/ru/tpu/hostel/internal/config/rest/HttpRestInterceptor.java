@@ -1,15 +1,21 @@
 package ru.tpu.hostel.internal.config.rest;
 
+import io.opentelemetry.api.internal.InstrumentationUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ru.tpu.hostel.internal.utils.ExecutionContext;
 import ru.tpu.hostel.internal.utils.Roles;
@@ -51,6 +57,31 @@ public class HttpRestInterceptor {
     private static final List<String> NOT_LOGGED_PATHS = List.of(ACTUATOR, HEALTH, METRICS);
 
     @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public HttpFilter httpFilter() {
+        return new HttpFilter() {
+            @Override
+            public void doFilter(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException, ServletException {
+                log.info("Фильтр трассировки");
+                if (NOT_LOGGED_PATHS.stream().anyMatch(p -> req.getRequestURI().startsWith(p))) {
+                    log.info("Не трассируем");
+                    InstrumentationUtil.suppressInstrumentation(() -> {
+                        try {
+                            chain.doFilter(req, res);
+                        } catch (IOException | ServletException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                } else {
+                    chain.doFilter(req, res);
+                }
+
+            }
+        };
+    }
+
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE + 1)
     public OncePerRequestFilter executionContextFilter() {
         return new OncePerRequestFilter() {
             @Override

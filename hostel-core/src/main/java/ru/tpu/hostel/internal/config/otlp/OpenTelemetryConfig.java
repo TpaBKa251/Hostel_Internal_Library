@@ -13,6 +13,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
 import io.opentelemetry.sdk.trace.samplers.Sampler;
 import io.opentelemetry.sdk.trace.samplers.SamplingResult;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,7 @@ import java.util.regex.Pattern;
  * @see OpenTelemetryProperties
  * @since 1.0.0
  */
+@Slf4j
 @Configuration
 @EnableConfigurationProperties({OpenTelemetryProperties.class})
 @RequiredArgsConstructor
@@ -75,6 +77,7 @@ public class OpenTelemetryConfig {
                     SpanKind spanKind,
                     Attributes attributes,
                     List<LinkData> parentLinks) {
+                log.info("Sampler кастомный");
 
                 // Проверяем различные возможные атрибуты с путями
                 String httpTarget = attributes.get(AttributeKey.stringKey("http.target"));
@@ -82,7 +85,10 @@ public class OpenTelemetryConfig {
                 String urlPath = attributes.get(AttributeKey.stringKey("url.path"));
                 String httpUrl = attributes.get(AttributeKey.stringKey("http.url"));
 
+                log.info("{}, {}, {}, {}", httpTarget, httpRoute, urlPath, httpUrl);
+
                 if (shouldExclude(httpTarget) || shouldExclude(httpRoute) || shouldExclude(urlPath) || shouldExclude(httpUrl)) {
+                    log.info("не трассируем в сэмплере");
                     return SamplingResult.drop();
                 }
 
