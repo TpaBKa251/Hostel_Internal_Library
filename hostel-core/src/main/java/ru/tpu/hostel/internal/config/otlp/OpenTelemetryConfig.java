@@ -85,9 +85,9 @@ public class OpenTelemetryConfig {
                 String urlPath = attributes.get(AttributeKey.stringKey("url.path"));
                 String httpUrl = attributes.get(AttributeKey.stringKey("http.url"));
 
-                log.info("{}, {}, {}, {}", httpTarget, httpRoute, urlPath, httpUrl);
+                log.info("Name: {}, {}, {}, {}, {}", name, httpTarget, httpRoute, urlPath, httpUrl);
 
-                if (shouldExclude(httpTarget) || shouldExclude(httpRoute) || shouldExclude(urlPath) || shouldExclude(httpUrl)) {
+                if (shouldExclude(httpTarget) || shouldExclude(httpRoute) || shouldExclude(urlPath) || shouldExclude(httpUrl) || name.contains("actuator")) {
                     log.info("не трассируем в сэмплере");
                     return SamplingResult.drop();
                 }
