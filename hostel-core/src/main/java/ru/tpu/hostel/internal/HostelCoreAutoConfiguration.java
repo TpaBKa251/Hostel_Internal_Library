@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Import;
 import ru.tpu.hostel.internal.common.exception.GlobalExceptionHandler;
 import ru.tpu.hostel.internal.common.logging.RepositoryLoggingFilter;
 import ru.tpu.hostel.internal.common.logging.ServiceLoggingFilter;
+import ru.tpu.hostel.internal.config.otlp.ExcludeHealthSamplerProvider;
 import ru.tpu.hostel.internal.config.otlp.OpenTelemetryConfig;
 import ru.tpu.hostel.internal.config.rest.HttpRestInterceptor;
 
@@ -14,7 +15,8 @@ import ru.tpu.hostel.internal.config.rest.HttpRestInterceptor;
         RepositoryLoggingFilter.class,
         ServiceLoggingFilter.class,
         OpenTelemetryConfig.class,
-        HttpRestInterceptor.class
+        HttpRestInterceptor.class,
+        ExcludeHealthSamplerProvider.class
 })
 public class HostelCoreAutoConfiguration {
 }

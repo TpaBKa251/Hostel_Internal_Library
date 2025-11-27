@@ -17,6 +17,7 @@ import ru.tpu.hostel.internal.utils.Roles;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,6 +43,12 @@ public class HttpRestInterceptor {
     private static final String FINISH_CONTROLLER_METHOD_EXECUTION = "[RESPONSE] Статус: {}. Время выполнения: {} мс";
 
     private static final String ACTUATOR = "/actuator";
+
+    private static final String HEALTH = "/health";
+
+    private static final String METRICS = "/metrics";
+
+    private static final List<String> NOT_LOGGED_PATHS = List.of(ACTUATOR, HEALTH, METRICS);
 
     @Bean
     public OncePerRequestFilter executionContextFilter() {
@@ -117,6 +124,6 @@ public class HttpRestInterceptor {
     }
 
     private boolean needToLog(String requestURI) {
-        return requestURI != null && !requestURI.startsWith(ACTUATOR);
+        return requestURI != null && NOT_LOGGED_PATHS.stream().noneMatch(requestURI::startsWith);
     }
 }
