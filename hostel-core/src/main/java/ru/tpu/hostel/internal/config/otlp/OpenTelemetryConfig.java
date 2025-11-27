@@ -1,10 +1,14 @@
 package ru.tpu.hostel.internal.config.otlp;
 
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.contrib.sampler.RuleBasedRoutingSampler;
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
+import io.opentelemetry.sdk.trace.samplers.Sampler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -49,6 +53,12 @@ public class OpenTelemetryConfig {
     @Primary
     public SdkTracerProvider sdkTracerProvider(@Qualifier(OTLP_SPAN_EXPORTER) SpanExporter otlpSpanExporter) {
         return SdkTracerProvider.builder()
+                .setSampler(
+                        RuleBasedRoutingSampler.builder(SpanKind.SERVER, Sampler.alwaysOn())
+                                .drop(AttributeKey.stringKey("http.url"), "^/(actuator|health|metrics).*")
+                                .drop(AttributeKey.stringKey("url.path"), "^/(actuator|health|metrics).*")
+                                .build()
+                )
                 .addSpanProcessor(BatchSpanProcessor.builder(otlpSpanExporter).build())
                 .setResource(Resource.getDefault().toBuilder()
                         .put("service.name", properties.serviceName())
