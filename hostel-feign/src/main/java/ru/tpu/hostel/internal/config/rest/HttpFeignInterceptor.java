@@ -1,15 +1,16 @@
 package ru.tpu.hostel.internal.config.rest;
 
 import feign.RequestInterceptor;
+import feign.RequestTemplate;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapSetter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.tpu.hostel.internal.utils.ExecutionContext;
-
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_HEADER;
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_PATTERN;
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
 
 /**
  * Интерцептор для добавления в заголовок REST запросов, которые отправляются через Feign клиент, информации о
@@ -22,27 +23,34 @@ import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
  */
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class HttpFeignInterceptor {
+
+    private static final TextMapSetter<RequestTemplate> REQUEST_TEMPLATE_TEXT_MAP_SETTER = (carrier, key, value) -> {
+        if (carrier != null) {
+            carrier.header(key, value);
+        }
+    };
+
+    private final OpenTelemetry openTelemetry;
 
     @Bean
     public RequestInterceptor tracingHttpRequestInterceptor() {
         return requestTemplate -> {
-            ExecutionContext context = ExecutionContext.get();
-            if (context == null) {
-                return;
+            Span span = Span.current();
+            if (span != null) {
+                span.updateName(requestTemplate.method() + " " + requestTemplate.path());
+                span.setAttribute("http.method", requestTemplate.method());
+                span.setAttribute("http.route", requestTemplate.path());
+                span.setAttribute("http.target", requestTemplate.path());
+                span.setAttribute("http.scheme", "http");
+                span.setAttribute("http.host", requestTemplate.feignTarget().name());
+                span.setAttribute("http.url", requestTemplate.url());
             }
-            String traceparent = String.format(
-                    TRACEPARENT_PATTERN,
-                    context.getTraceId(),
-                    context.getSpanId()
-            );
-            requestTemplate.header(TRACEPARENT_HEADER, traceparent);
-            if (context.getUserID() != null) {
-                requestTemplate.header(USER_ID_HEADER, context.getUserID().toString());
-            }
-            if (context.getUserRoles() != null && !context.getUserRoles().isEmpty()) {
-                requestTemplate.header(USER_ROLES_HEADER, context.getUserRoles().toString().replace("[", "").replace("]", "").replaceAll(" ", ""));
-            }
+
+            openTelemetry.getPropagators()
+                    .getTextMapPropagator()
+                    .inject(Context.current(), requestTemplate, REQUEST_TEMPLATE_TEXT_MAP_SETTER);
         };
     }
 

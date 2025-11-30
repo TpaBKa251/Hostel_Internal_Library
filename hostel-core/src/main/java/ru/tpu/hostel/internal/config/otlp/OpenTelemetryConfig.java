@@ -1,10 +1,21 @@
 package ru.tpu.hostel.internal.config.otlp;
 
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.ContextKey;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapGetter;
+import io.opentelemetry.context.propagation.TextMapPropagator;
+import io.opentelemetry.context.propagation.TextMapSetter;
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
+import io.opentelemetry.instrumentation.jdbc.datasource.JdbcTelemetry;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.logs.SdkLoggerProvider;
+import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.data.LinkData;
@@ -15,20 +26,34 @@ import io.opentelemetry.sdk.trace.samplers.SamplingResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.util.StringUtils;
+import ru.tpu.hostel.internal.utils.Roles;
 
+import javax.sql.DataSource;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES;
+import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
 
 /**
  * Конфигурация для настройки трассировки через Open Telemetry и ее экспорта
  *
  * @author Илья Лапшин
- * @version 1.0.3
+ * @version 1.5.0
  * @see OpenTelemetryProperties
  * @since 1.0.0
  */
@@ -77,18 +102,19 @@ public class OpenTelemetryConfig {
                     SpanKind spanKind,
                     Attributes attributes,
                     List<LinkData> parentLinks) {
-                log.info("Sampler кастомный");
 
-                // Проверяем различные возможные атрибуты с путями
                 String httpTarget = attributes.get(AttributeKey.stringKey("http.target"));
                 String httpRoute = attributes.get(AttributeKey.stringKey("http.route"));
                 String urlPath = attributes.get(AttributeKey.stringKey("url.path"));
                 String httpUrl = attributes.get(AttributeKey.stringKey("http.url"));
 
-                log.info("Name: {}, {}, {}, {}, {}", name, httpTarget, httpRoute, urlPath, httpUrl);
-
-                if (shouldExclude(httpTarget) || shouldExclude(httpRoute) || shouldExclude(urlPath) || shouldExclude(httpUrl) || name.contains("actuator")) {
-                    log.info("не трассируем в сэмплере");
+                if (shouldExclude(httpTarget)
+                        || shouldExclude(httpRoute)
+                        || shouldExclude(urlPath)
+                        || shouldExclude(httpUrl)
+                        || name.contains("actuator")
+                        || name.contains("health")
+                        || name.contains("metrics")) {
                     return SamplingResult.drop();
                 }
 
@@ -122,6 +148,109 @@ public class OpenTelemetryConfig {
                         .put("service.name", properties.serviceName())
                         .build())
                 .build();
+    }
+
+    @Bean
+    public TextMapPropagator userContextPropagator() {
+        return new TextMapPropagator() {
+
+            @Override
+            public Collection<String> fields() {
+                return List.of(USER_ID_HEADER, USER_ROLES_HEADER);
+            }
+
+            @Override
+            public <C> void inject(Context context, C carrier, TextMapSetter<C> setter) {
+                UUID userId = context.get(ContextKey.named(USER_ID));
+                Set<Roles> roles = context.get(ContextKey.named(USER_ROLES));
+
+                if (userId != null) {
+                    setter.set(carrier, USER_ID_HEADER, userId.toString());
+                }
+                if (roles != null && !roles.isEmpty()) {
+                    String rolesStr = roles.stream().map(Enum::name).collect(Collectors.joining(","));
+                    setter.set(carrier, USER_ROLES_HEADER, rolesStr);
+                }
+            }
+
+            @Override
+            public <C> Context extract(Context context, C carrier, TextMapGetter<C> getter) {
+                String userIdStr = getter.get(carrier, USER_ID_HEADER);
+                String rolesStr = getter.get(carrier, USER_ROLES_HEADER);
+
+                Context newContext = context;
+                if (StringUtils.hasText(userIdStr)) {
+                    UUID userId = UUID.fromString(userIdStr);
+                    newContext = newContext.with(ContextKey.named(USER_ID), userId);
+                }
+                if (StringUtils.hasText(rolesStr)) {
+                    Set<Roles> roles = Arrays.stream(rolesStr.split(","))
+                            .map(Roles::valueOf)
+                            .collect(Collectors.toUnmodifiableSet());
+                    newContext = newContext.with(ContextKey.named(USER_ROLES), roles);
+                }
+                return newContext;
+            }
+        };
+    }
+
+    @Bean
+    @Primary
+    public ContextPropagators customContextPropagators() {
+        return ContextPropagators.create(
+                TextMapPropagator.composite(
+                        W3CTraceContextPropagator.getInstance(),
+                        userContextPropagator()
+                )
+        );
+    }
+
+    @Bean
+    @Primary
+    public SdkMeterProvider customMeterProvider() {
+        return SdkMeterProvider.builder().build();
+    }
+
+    @Bean
+    @Primary
+    public SdkLoggerProvider customLoggerProvider() {
+        return SdkLoggerProvider.builder().build();
+    }
+
+    @Bean
+    @Primary
+    public OpenTelemetrySdk customOpenTelemetry(
+            SdkTracerProvider tracerProvider,
+            ContextPropagators propagators,
+            SdkLoggerProvider loggerProvider,
+            SdkMeterProvider meterProvider
+    ) {
+        return OpenTelemetrySdk.builder()
+                .setTracerProvider(tracerProvider)
+                .setPropagators(propagators)
+                .setMeterProvider(meterProvider)
+                .setLoggerProvider(loggerProvider)
+                .build();
+    }
+
+    @Bean
+    @Primary
+    public DataSource tracingDataSource(
+            OpenTelemetry openTelemetry,
+            DataSourceProperties dataSourceProperties
+    ) {
+        HikariDataSource originalDataSource = dataSourceProperties.initializeDataSourceBuilder()
+                .type(HikariDataSource.class)
+                .build();
+
+        return JdbcTelemetry.builder(openTelemetry)
+                .setCaptureQueryParameters(false)
+                .setStatementSanitizationEnabled(true)
+                .setDataSourceInstrumenterEnabled(true)
+                .setStatementInstrumenterEnabled(true)
+                .setTransactionInstrumenterEnabled(true)
+                .build()
+                .wrap(originalDataSource);
     }
 
 }

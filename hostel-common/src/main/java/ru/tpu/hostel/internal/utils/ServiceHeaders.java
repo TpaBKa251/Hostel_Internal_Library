@@ -13,4 +13,8 @@ public class ServiceHeaders {
 
     public static final String TRACEPARENT_PATTERN = "00-%s-%s-01";
 
+    public static final String USER_ID = "userId";
+
+    public static final String USER_ROLES = "roles";
+
 }

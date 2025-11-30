@@ -10,7 +10,6 @@ import com.rabbitmq.client.Channel;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
-import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.TextMapGetter;
@@ -87,8 +86,6 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
             .enable(SerializationFeature.INDENT_OUTPUT)
             .writer();
 
-    private final Tracer tracer;
-
     private final OpenTelemetry openTelemetry;
 
     /**
@@ -125,11 +122,11 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
             MDC.put("userId", userId.toString());
         }
         if (roles != null && !roles.isEmpty()) {
-            MDC.put("roles", roles.stream().map(Roles::name).collect(Collectors.joining(", ")));
+            MDC.put("roles", roles.stream().map(Roles::name).collect(Collectors.joining(",")));
         }
 
         String queue = messageProperties.getConsumerQueue();
-        Span span = tracer.spanBuilder("rabbit.receive")
+        Span span = openTelemetry.getTracer("ru.tpu.hostel.internal.amqp").spanBuilder("rabbit.receive")
                 .setParent(context)
                 .setAttribute("messaging.system", "rabbitmq")
                 .setAttribute("messaging.destination", queue)
@@ -142,6 +139,8 @@ public class AmqpMessageReceiveInterceptor implements MethodInterceptor {
 
         long startTime = System.currentTimeMillis();
         try (Scope ignored = span.makeCurrent()) {
+            MDC.put("traceId", span.getSpanContext().getTraceId());
+            MDC.put("spanId", span.getSpanContext().getSpanId());
             ExecutionContext.create(
                     userId,
                     roles,

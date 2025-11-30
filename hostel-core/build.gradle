@@ -16,6 +16,9 @@ dependencies {
     compileOnly 'io.opentelemetry:opentelemetry-exporter-otlp:1.49.0'
     compileOnly 'io.opentelemetry.contrib:opentelemetry-samplers:1.49.0-alpha'
     compileOnly 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.49.0'
+    compileOnly 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.22.0'
+    compileOnly 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:2.22.0'
+    compileOnly 'io.opentelemetry.instrumentation:opentelemetry-jdbc:2.22.0-alpha'
 
     compileOnly 'org.springframework.boot:spring-boot:3.5.8'
     compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.5.8'
