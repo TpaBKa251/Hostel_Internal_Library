@@ -1,5 +1,6 @@
 package ru.tpu.hostel.internal.config.otlp;
 
+import com.zaxxer.hikari.HikariDataSource;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
