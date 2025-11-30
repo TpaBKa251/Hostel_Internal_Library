@@ -29,16 +29,16 @@ jobs:
         id: ver
         run: echo "VERSION=$(./gradlew -q printVersion)" >> $GITHUB_ENV
 
+      # Сборка всех модулей
+      - name: Build
+        run: ./gradlew clean assemble --no-daemon
+
       - name: Create tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag v${{ env.VERSION }}
-          git push origin v${{ env.VERSION }}    
-
-      # Сборка всех модулей
-      - name: Build
-        run: ./gradlew clean assemble --no-daemon
+          git push origin v${{ env.VERSION }}  
 
       # Публикуем все модули
       - name: Publish to Nexus

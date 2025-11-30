@@ -3,6 +3,7 @@ package ru.tpu.hostel.internal.config.amqp;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.opentelemetry.api.OpenTelemetry;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.core.AmqpAdmin;
@@ -53,14 +54,17 @@ public class RabbitNotificationServiceConfig {
 
     @Primary
     @Bean(NOTIFICATION_SERVICE_CONNECTION_FACTORY)
-    public ConnectionFactory notificationServiceConnectionFactory(RabbitNotificationServiceProperties properties) {
+    public ConnectionFactory notificationServiceConnectionFactory(
+            RabbitNotificationServiceProperties properties,
+            OpenTelemetry openTelemetry
+    ) {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
         connectionFactory.setUsername(properties.getUsername());
         connectionFactory.setPassword(properties.getPassword());
         connectionFactory.setVirtualHost(properties.getVirtualHost());
         connectionFactory.setAddresses(properties.getAddresses());
         connectionFactory.setConnectionTimeout((int) properties.getConnectionTimeout().toMillis());
-        return connectionFactory;
+        return new TracedConnectionFactory(connectionFactory, openTelemetry);
     }
 
     @Primary
