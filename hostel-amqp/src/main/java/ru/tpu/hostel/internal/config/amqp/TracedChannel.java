@@ -151,49 +151,52 @@ public class TracedChannel implements Channel {
 
     @Override
     public void basicAck(long l, boolean b) throws IOException {
-        Span span = tracer.spanBuilder("rabbitmq.ack")
-                .setSpanKind(SpanKind.CLIENT)
-                .setAttribute("messaging.system", "rabbitmq")
-                .setAttribute("messaging.rabbitmq.delivery_tag", l)
-                .setAttribute("messaging.rabbitmq.ack.multiple", b)
-                .setParent(Context.current())
-                .startSpan();
-
-        try (Scope ignored = span.makeCurrent()) {
-            delegate.basicAck(l, b);
-            span.setStatus(StatusCode.OK);
-        } catch (Exception e) {
-            handleException(e, span);
-            throw e;
-        } finally {
-            span.end();
-        }
+        delegate.basicAck(l, b);
+//        Span span = tracer.spanBuilder("rabbitmq.ack")
+//                .setSpanKind(SpanKind.CLIENT)
+//                .setAttribute("messaging.system", "rabbitmq")
+//                .setAttribute("messaging.rabbitmq.delivery_tag", l)
+//                .setAttribute("messaging.rabbitmq.ack.multiple", b)
+//                .setParent(Context.current())
+//                .startSpan();
+//
+//        try (Scope ignored = span.makeCurrent()) {
+//            delegate.basicAck(l, b);
+//            span.setStatus(StatusCode.OK);
+//        } catch (Exception e) {
+//            handleException(e, span);
+//            throw e;
+//        } finally {
+//            span.end();
+//        }
     }
 
     @Override
     public void basicNack(long l, boolean b, boolean b1) throws IOException {
-        Span span = tracer.spanBuilder("rabbitmq.nack")
-                .setSpanKind(SpanKind.CLIENT)
-                .setAttribute("messaging.system", "rabbitmq")
-                .setAttribute("messaging.rabbitmq.delivery_tag", l)
-                .setAttribute("messaging.rabbitmq.nack.multiple", b)
-                .setAttribute("messaging.rabbitmq.nack.requeue", b1)
-                .setParent(Context.current())
-                .startSpan();
-
-        try (Scope ignored = span.makeCurrent()) {
-            delegate.basicNack(l, b, b1);
-            span.setStatus(StatusCode.OK);
-        } catch (Exception e) {
-            handleException(e, span);
-            throw e;
-        } finally {
-            span.end();
-        }
+        delegate.basicNack(l, b, b1);
+//        Span span = tracer.spanBuilder("rabbitmq.nack")
+//                .setSpanKind(SpanKind.CLIENT)
+//                .setAttribute("messaging.system", "rabbitmq")
+//                .setAttribute("messaging.rabbitmq.delivery_tag", l)
+//                .setAttribute("messaging.rabbitmq.nack.multiple", b)
+//                .setAttribute("messaging.rabbitmq.nack.requeue", b1)
+//                .setParent(Context.current())
+//                .startSpan();
+//
+//        try (Scope ignored = span.makeCurrent()) {
+//            delegate.basicNack(l, b, b1);
+//            span.setStatus(StatusCode.OK);
+//        } catch (Exception e) {
+//            handleException(e, span);
+//            throw e;
+//        } finally {
+//            span.end();
+//        }
     }
 
     @Override
     public void basicReject(long l, boolean b) throws IOException {
+//        delegate.basicReject(l, b);
         Span span = tracer.spanBuilder("rabbitmq.reject")
                 .setSpanKind(SpanKind.CLIENT)
                 .setAttribute("messaging.system", "rabbitmq")
@@ -465,80 +468,84 @@ public class TracedChannel implements Channel {
 
     @Override
     public void close() throws IOException, TimeoutException {
-        Span span = tracer.spanBuilder("rabbitmq.channel.close")
-                .setSpanKind(SpanKind.CLIENT)
-                .setAttribute("messaging.system", "rabbitmq")
-                .setParent(Context.current())
-                .startSpan();
-
-        try (Scope ignored = span.makeCurrent()) {
-            delegate.close();
-            span.setStatus(StatusCode.OK);
-        } catch (Exception e) {
-            handleException(e, span);
-            throw e;
-        } finally {
-            span.end();
-        }
+        delegate.close();
+//        Span span = tracer.spanBuilder("rabbitmq.channel.close")
+//                .setSpanKind(SpanKind.CLIENT)
+//                .setAttribute("messaging.system", "rabbitmq")
+//                .setParent(Context.current())
+//                .startSpan();
+//
+//        try (Scope ignored = span.makeCurrent()) {
+//            delegate.close();
+//            span.setStatus(StatusCode.OK);
+//        } catch (Exception e) {
+//            handleException(e, span);
+//            throw e;
+//        } finally {
+//            span.end();
+//        }
     }
 
     @Override
     public void close(int i, String s) throws IOException, TimeoutException {
-        Span span = tracer.spanBuilder("rabbitmq.channel.close")
-                .setSpanKind(SpanKind.CLIENT)
-                .setAttribute("messaging.system", "rabbitmq")
-                .setParent(Context.current())
-                .startSpan();
-
-        try (Scope ignored = span.makeCurrent()) {
-            delegate.close(i, s);
-            span.setStatus(StatusCode.OK);
-        } catch (Exception e) {
-            handleException(e, span);
-            throw e;
-        } finally {
-            span.end();
-        }
+        delegate.close(i, s);
+//        Span span = tracer.spanBuilder("rabbitmq.channel.close")
+//                .setSpanKind(SpanKind.CLIENT)
+//                .setAttribute("messaging.system", "rabbitmq")
+//                .setParent(Context.current())
+//                .startSpan();
+//
+//        try (Scope ignored = span.makeCurrent()) {
+//            delegate.close(i, s);
+//            span.setStatus(StatusCode.OK);
+//        } catch (Exception e) {
+//            handleException(e, span);
+//            throw e;
+//        } finally {
+//            span.end();
+//        }
     }
 
     @Override
     public void abort() throws IOException {
-        Span span = tracer.spanBuilder("rabbitmq.channel.abort")
-                .setSpanKind(SpanKind.CLIENT)
-                .setParent(Context.current())
-                .setAttribute("messaging.system", "rabbitmq")
-                .startSpan();
-
-        try (Scope ignored = span.makeCurrent()) {
-            delegate.abort();
-            span.setStatus(StatusCode.OK);
-        } catch (Exception e) {
-            span.recordException(e);
-            span.setStatus(StatusCode.ERROR);
-            throw e;
-        } finally {
-            span.end();
-        }
+        delegate.abort();
+//        Span span = tracer.spanBuilder("rabbitmq.channel.abort")
+//                .setSpanKind(SpanKind.CLIENT)
+//                .setParent(Context.current())
+//                .setAttribute("messaging.system", "rabbitmq")
+//                .startSpan();
+//
+//        try (Scope ignored = span.makeCurrent()) {
+//            delegate.abort();
+//            span.setStatus(StatusCode.OK);
+//        } catch (Exception e) {
+//            span.recordException(e);
+//            span.setStatus(StatusCode.ERROR);
+//            throw e;
+//        } finally {
+//            span.end();
+//        }
     }
 
     @Override
     public void abort(int i, String s) throws IOException {
-        Span span = tracer.spanBuilder("rabbitmq.channel.abort")
-                .setSpanKind(SpanKind.CLIENT)
-                .setAttribute("messaging.system", "rabbitmq")
-                .setParent(Context.current())
-                .startSpan();
-
-        try (Scope ignored = span.makeCurrent()) {
-            delegate.abort(i, s);
-            span.setStatus(StatusCode.OK);
-        } catch (Exception e) {
-            span.recordException(e);
-            span.setStatus(StatusCode.ERROR);
-            throw e;
-        } finally {
-            span.end();
-        }
+        delegate.abort(i, s);
+//        Span span = tracer.spanBuilder("rabbitmq.channel.abort")
+//                .setSpanKind(SpanKind.CLIENT)
+//                .setAttribute("messaging.system", "rabbitmq")
+//                .setParent(Context.current())
+//                .startSpan();
+//
+//        try (Scope ignored = span.makeCurrent()) {
+//            delegate.abort(i, s);
+//            span.setStatus(StatusCode.OK);
+//        } catch (Exception e) {
+//            span.recordException(e);
+//            span.setStatus(StatusCode.ERROR);
+//            throw e;
+//        } finally {
+//            span.end();
+//        }
     }
 
     @Override
@@ -618,7 +625,7 @@ public class TracedChannel implements Channel {
 
     @Override
     public AMQP.Exchange.DeclareOk exchangeDeclare(String s, BuiltinExchangeType builtinExchangeType, boolean b, boolean b1, Map<String, Object> map) throws IOException {
-        return null;
+        return delegate.exchangeDeclare(s, builtinExchangeType, b, b1, map);
     }
 
     @Override
@@ -773,12 +780,12 @@ public class TracedChannel implements Channel {
 
     @Override
     public void waitForConfirmsOrDie() throws IOException, InterruptedException {
-        delegate.waitForConfirms();
+        delegate.waitForConfirmsOrDie();
     }
 
     @Override
     public void waitForConfirmsOrDie(long l) throws IOException, InterruptedException, TimeoutException {
-        delegate.waitForConfirms();
+        delegate.waitForConfirmsOrDie(l);
     }
 
     @Override

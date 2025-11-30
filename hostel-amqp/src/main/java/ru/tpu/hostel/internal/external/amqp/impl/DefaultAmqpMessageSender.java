@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.TextMapSetter;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.AmqpException;
@@ -18,7 +21,6 @@ import ru.tpu.hostel.internal.config.amqp.AmqpMessagingConfig;
 import ru.tpu.hostel.internal.exception.ServiceException;
 import ru.tpu.hostel.internal.external.amqp.AmqpMessageSender;
 import ru.tpu.hostel.internal.external.amqp.Microservice;
-import ru.tpu.hostel.internal.utils.ExecutionContext;
 import ru.tpu.hostel.internal.utils.TimeUtil;
 
 import java.io.IOException;
@@ -27,12 +29,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_HEADER;
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.TRACEPARENT_PATTERN;
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ID_HEADER;
-import static ru.tpu.hostel.internal.utils.ServiceHeaders.USER_ROLES_HEADER;
 
 /**
  * Дефолтная реализация интерфейса {@link AmqpMessageSender}. Можно использовать везде и всюду, необходимо лишь написать
@@ -64,7 +60,15 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             .setTimeZone(TimeUtil.getTimeZone())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+    private static final TextMapSetter<MessageProperties> MESSAGE_PROPERTIES_TEXT_MAP_SETTER = (carrier, key, value) -> {
+        if (carrier != null) {
+            carrier.setHeader(key, value);
+        }
+    };
+
     private final Set<AmqpMessagingConfig> amqpMessagingConfigs;
+
+    private final OpenTelemetry openTelemetry;
 
     @Override
     public void send(@NotNull Enum<?> messageType, @NotNull String messageId, @NotNull Object messagePayload) {
@@ -263,35 +267,17 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
     private MessageProperties getMessageProperties(String messageId, MessageProperties messageProperties) {
         ZonedDateTime now = TimeUtil.getZonedDateTime();
         long nowMillis = now.toInstant().toEpochMilli();
-        ExecutionContext context = ExecutionContext.get();
-        String traceparent = null;
-        boolean needToClearContext = false;
-        try {
-            if (context != null) {
-                traceparent = String.format(TRACEPARENT_PATTERN, context.getTraceId(), context.getSpanId());
-            } else {
-                context = ExecutionContext.create();
-                needToClearContext = true;
-            }
+        MessageProperties properties = MessagePropertiesBuilder.fromProperties(messageProperties)
+                .setMessageId(messageId)
+                .setCorrelationId(UUID.randomUUID().toString())
+                .setTimestamp(new Date(nowMillis))
+                .build();
 
-            return MessagePropertiesBuilder.fromProperties(messageProperties)
-                    .setMessageId(messageId)
-                    .setCorrelationId(UUID.randomUUID().toString())
-                    .setTimestamp(new Date(nowMillis))
-                    .setHeader(USER_ID_HEADER, context.getUserID())
-                    .setHeader(
-                            USER_ROLES_HEADER,
-                            context.getUserRoles().stream()
-                                    .map(Enum::name)
-                                    .collect(Collectors.joining(","))
-                    )
-                    .setHeader(TRACEPARENT_HEADER, traceparent)
-                    .build();
-        } finally {
-            if (needToClearContext) {
-                ExecutionContext.clear();
-            }
-        }
+        openTelemetry.getPropagators()
+                .getTextMapPropagator()
+                .inject(Context.current(), properties, MESSAGE_PROPERTIES_TEXT_MAP_SETTER);
+
+        return properties;
     }
 
     private MessageProperties getReplyMessageProperties(MessageProperties messageProperties) {

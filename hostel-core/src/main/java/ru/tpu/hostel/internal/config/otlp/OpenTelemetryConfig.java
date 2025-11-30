@@ -1,6 +1,5 @@
 package ru.tpu.hostel.internal.config.otlp;
 
-import com.zaxxer.hikari.HikariDataSource;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -28,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -250,7 +248,7 @@ public class OpenTelemetryConfig {
                 .setStatementSanitizationEnabled(true)
                 .setDataSourceInstrumenterEnabled(true)
                 .setStatementInstrumenterEnabled(true)
-                .setTransactionInstrumenterEnabled(true)
+                .setTransactionInstrumenterEnabled(false)
                 .build()
                 .wrap(dataSource);
     }

@@ -51,22 +51,23 @@ public class TracedConnection implements Connection {
 
     @Override
     public void close() throws AmqpException {
-        Span span = tracer.spanBuilder("rabbitmq.connection.close")
-                .setSpanKind(SpanKind.CLIENT)
-                .setAttribute("messaging.system", "rabbitmq")
-                .setParent(Context.current())
-                .startSpan();
-
-        try (Scope ignored = span.makeCurrent()) {
-            delegate.close();
-            span.setStatus(StatusCode.OK);
-        } catch (Exception e) {
-            span.recordException(e);
-            span.setStatus(StatusCode.ERROR);
-            throw e;
-        } finally {
-            span.end();
-        }
+        delegate.close();
+//        Span span = tracer.spanBuilder("rabbitmq.connection.close")
+//                .setSpanKind(SpanKind.CLIENT)
+//                .setAttribute("messaging.system", "rabbitmq")
+//                .setParent(Context.current())
+//                .startSpan();
+//
+//        try (Scope ignored = span.makeCurrent()) {
+//            delegate.close();
+//            span.setStatus(StatusCode.OK);
+//        } catch (Exception e) {
+//            span.recordException(e);
+//            span.setStatus(StatusCode.ERROR);
+//            throw e;
+//        } finally {
+//            span.end();
+//        }
     }
 
     @Override
