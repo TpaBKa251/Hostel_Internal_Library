@@ -83,7 +83,7 @@ public class FeignClientLoggingFilter {
                 continue;
             }
             String previousFullPath = fullPath;
-            fullPath = fullPath.replace("{" + parameters[i].getName() + "}", joinPoint.getArgs()[i].toString());
+            fullPath = fullPath.replace("{" + parameters[i].getName() + "}", joinPoint.getArgs()[i] == null ? "null" : joinPoint.getArgs()[i].toString());
 
             if (previousFullPath.equals(fullPath)) {
                 paramsMap.put(parameters[i].getName(), joinPoint.getArgs()[i]);
@@ -92,7 +92,7 @@ public class FeignClientLoggingFilter {
 
         String args = paramsMap.entrySet()
                 .stream()
-                .map(entry -> entry.getKey() + " = " + entry.getValue())
+                .map(entry -> entry.getKey() + " = " + (entry.getValue() == null ? "null" : entry.getValue().toString()))
                 .collect(Collectors.joining(", "));
 
         logRequest(serviceName, httpMethod, fullPath, args, methodLogging, paramsLogging);
