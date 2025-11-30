@@ -3,6 +3,7 @@ package ru.tpu.hostel.internal.config.otlp;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
@@ -105,6 +106,12 @@ public class OpenTelemetryConfig {
                     Attributes attributes,
                     List<LinkData> parentLinks) {
 
+                boolean isRootSpan = !Span.fromContext(parentContext).getSpanContext().isValid();
+
+                if (isRootSpan && shouldExcludeRootSpan(name, spanKind, attributes)) {
+                    return SamplingResult.drop();
+                }
+
                 String httpTarget = attributes.get(AttributeKey.stringKey("http.target"));
                 String httpRoute = attributes.get(AttributeKey.stringKey("http.route"));
                 String urlPath = attributes.get(AttributeKey.stringKey("url.path"));
@@ -121,6 +128,34 @@ public class OpenTelemetryConfig {
                 }
 
                 return Sampler.alwaysOn().shouldSample(parentContext, traceId, name, spanKind, attributes, parentLinks);
+            }
+
+            private boolean shouldExcludeRootSpan(String spanName, SpanKind spanKind, Attributes attributes) {
+                String dbSystem = attributes.get(AttributeKey.stringKey("db.system"));
+                String messagingSystem = attributes.get(AttributeKey.stringKey("messaging.system"));
+                String dbOperation = attributes.get(AttributeKey.stringKey("db.operation"));
+                String dbStatement = attributes.get(AttributeKey.stringKey("db.statement"));
+
+                return
+                        dbSystem != null ||
+                                dbOperation != null ||
+                                dbStatement != null ||
+                                spanName.contains("jdbc") ||
+                                spanName.contains("database") ||
+                                spanName.contains("sql") ||
+                                spanName.contains("query") ||
+
+                                messagingSystem != null ||
+                                spanName.contains("rabbitmq") ||
+                                spanName.contains("amqp") ||
+                                spanName.contains("messaging") ||
+
+                                spanName.contains("migration") ||
+                                spanName.contains("flyway") ||
+                                spanName.contains("pool") ||
+                                spanName.contains("connection") ||
+                                spanName.contains("channel") ||
+                                spanName.contains("init");
             }
 
             private boolean shouldExclude(String path) {
