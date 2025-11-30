@@ -27,11 +27,14 @@ import io.opentelemetry.sdk.trace.samplers.SamplingResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.util.StringUtils;
 import ru.tpu.hostel.internal.utils.Roles;
 
@@ -236,14 +239,12 @@ public class OpenTelemetryConfig {
 
     @Bean
     @Primary
+    @ConditionalOnBean(DataSource.class)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     public DataSource tracingDataSource(
             OpenTelemetry openTelemetry,
-            DataSourceProperties dataSourceProperties
+            DataSource dataSource
     ) {
-        HikariDataSource originalDataSource = dataSourceProperties.initializeDataSourceBuilder()
-                .type(HikariDataSource.class)
-                .build();
-
         return JdbcTelemetry.builder(openTelemetry)
                 .setCaptureQueryParameters(false)
                 .setStatementSanitizationEnabled(true)
@@ -251,7 +252,7 @@ public class OpenTelemetryConfig {
                 .setStatementInstrumenterEnabled(true)
                 .setTransactionInstrumenterEnabled(true)
                 .build()
-                .wrap(originalDataSource);
+                .wrap(dataSource);
     }
 
 }
