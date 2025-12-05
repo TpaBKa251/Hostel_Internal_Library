@@ -18,6 +18,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -43,8 +44,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class RabbitConfiguration {
 
-    @Bean
-    Map<Microservice, Map<String, MessageConverter>> messageConverters(
+    @Bean("customMessageConverters")
+    Map<Microservice, Map<String, MessageConverter>> customMessageConverters(
             RabbitProperties rabbitProperties,
             ApplicationContext applicationContext
     ) {
@@ -72,8 +73,8 @@ public class RabbitConfiguration {
         return converters;
     }
 
-    @Bean
-    Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories(
+    @Bean("customConnectionFactories")
+    Map<Microservice, Map<String, TracedConnectionFactory>> customConnectionFactories(
             OpenTelemetry openTelemetry,
             RabbitProperties rabbitProperties,
             ApplicationContext applicationContext
@@ -121,10 +122,10 @@ public class RabbitConfiguration {
         return new TracedConnectionFactory(connectionFactory, openTelemetry);
     }
 
-    @Bean
-    Map<Microservice, Map<String, RabbitTemplate>> rabbitTemplates(
-            Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories,
-            Map<Microservice, Map<String, MessageConverter>> messageConverters,
+    @Bean("customRabbitTemplates")
+    Map<Microservice, Map<String, RabbitTemplate>> customRabbitTemplates(
+            @Qualifier("customConnectionFactories") Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories,
+            @Qualifier("customMessageConverters") Map<Microservice, Map<String, MessageConverter>> messageConverters,
             RabbitProperties rabbitProperties
     ) {
         Map<Microservice, Map<String, RabbitTemplate>> rabbitTemplates = new EnumMap<>(Microservice.class);
@@ -149,8 +150,8 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    Map<Microservice, Map<String, RabbitAdmin>> amqpAdmins(
-            Map<Microservice, Map<String, RabbitTemplate>> rabbitTemplates,
+    Map<Microservice, Map<String, RabbitAdmin>> customAmqpAdmins(
+            @Qualifier("customRabbitTemplates") Map<Microservice, Map<String, RabbitTemplate>> rabbitTemplates,
             RabbitProperties rabbitProperties
     ) {
         Map<Microservice, Map<String, RabbitAdmin>> amqpAdmins = new EnumMap<>(Microservice.class);
@@ -209,8 +210,8 @@ public class RabbitConfiguration {
 
     @Bean
     Set<AmqpMessagingConfig> amqpMessagingConfigs(
-            Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories,
-            Map<Microservice, Map<String, MessageConverter>> messageConverters,
+            @Qualifier("customConnectionFactories") Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories,
+            @Qualifier("customMessageConverters") Map<Microservice, Map<String, MessageConverter>> messageConverters,
             RabbitProperties rabbitProperties,
             ApplicationContext applicationContext
     ) {
