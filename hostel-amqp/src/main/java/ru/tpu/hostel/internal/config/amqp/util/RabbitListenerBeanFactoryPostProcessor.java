@@ -2,6 +2,7 @@ package ru.tpu.hostel.internal.config.amqp.util;
 
 import io.opentelemetry.api.OpenTelemetry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RabbitListenerBeanFactoryPostProcessor implements SmartInitializingSingleton {
@@ -83,6 +85,7 @@ public class RabbitListenerBeanFactoryPostProcessor implements SmartInitializing
                             )
                     );
 
+                    log.info("Create listener bean: {}", beanName);
                     beanFactory.registerSingleton(beanName, listenerFactory);
                 });
                 serviceMap.put(name, listenerToBeanNameMap);
