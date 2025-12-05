@@ -1,4 +1,4 @@
-package ru.tpu.hostel.internal.config.amqp;
+package ru.tpu.hostel.internal.config.amqp.tracing;
 
 import com.rabbitmq.client.ShutdownListener;
 import com.rabbitmq.client.ShutdownSignalException;

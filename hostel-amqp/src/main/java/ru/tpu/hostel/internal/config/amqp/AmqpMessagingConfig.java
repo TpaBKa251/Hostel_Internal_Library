@@ -18,7 +18,7 @@ import java.util.Set;
  * на основе метода {@link #receivingMicroservices()}.</li>
  * </ul>
  *
- * <p>Настройки для {@code MessageProperties} (то, что вы пишите в {@link #messageProperties()} <b><i>ДОПОЛНЯЕТ</i></b>
+ * <p>Настройки для {@code MessageProperties} (то, что вы пишите в {@link #defaultMessageProperties()} <b><i>ДОПОЛНЯЕТ</i></b>
  * эти настройки):
  * <pre><code>
  * ZonedDateTime now = TimeUtil.getZonedDateTime();
@@ -137,7 +137,7 @@ public interface AmqpMessagingConfig {
      * @return экземпляр MessageProperties
      */
     @NotNull
-    MessageProperties messageProperties();
+    MessageProperties defaultMessageProperties();
 
     /**
      * Сет из микросервисов, которые являются получателями сообщения.
@@ -169,7 +169,7 @@ public interface AmqpMessagingConfig {
      * @param amqpMessageType енам для фильтрации (любой)
      * @return подходит конфиг или нет
      */
-    boolean isApplicable(Enum<?> amqpMessageType);
+    boolean isApplicable(@NotNull Enum<?> amqpMessageType);
 
     /**
      * Опциональный для переопределения метод. Нужен для фильтрации конфига на основе микросервиса-получателя.
@@ -177,7 +177,7 @@ public interface AmqpMessagingConfig {
      * @param microservice енам микросервиса-получателя
      * @return подходит конфиг или нет
      */
-    default boolean isApplicable(Microservice microservice) {
+    default boolean isApplicable(@NotNull Microservice microservice) {
         return receivingMicroservices().contains(microservice);
     }
 

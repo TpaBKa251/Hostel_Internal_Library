@@ -1,4 +1,4 @@
-package ru.tpu.hostel.internal.config.amqp.interceptor;
+package ru.tpu.hostel.internal.config.amqp.tracing.interceptor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;

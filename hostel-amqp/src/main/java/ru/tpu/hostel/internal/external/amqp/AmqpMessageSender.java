@@ -58,6 +58,13 @@ public interface AmqpMessageSender {
      */
     void send(@NotNull Enum<?> messageType, @NotNull String messageId, @NotNull Object messagePayload);
 
+    void send(
+            @NotNull Enum<?> messageType,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            MessageProperties messageProperties
+    );
+
     /**
      * Синхронная RPC отправка. Сразу возвращает ответ
      *
@@ -73,6 +80,15 @@ public interface AmqpMessageSender {
             @NotNull String messageId,
             @NotNull Object messagePayload,
             @NotNull Class<R> responseType
+    );
+
+    @NotNull
+    <R> R sendAndReceive(
+            @NotNull Enum<?> messageType,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType,
+            MessageProperties messageProperties
     );
 
     /**

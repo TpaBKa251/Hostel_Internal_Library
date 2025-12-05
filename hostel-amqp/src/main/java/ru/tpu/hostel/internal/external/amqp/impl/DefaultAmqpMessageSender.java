@@ -77,7 +77,35 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
             MessageProperties messageProperties = getMessageProperties(
                     messageId,
-                    amqpMessagingConfig.messageProperties()
+                    amqpMessagingConfig.defaultMessageProperties()
+            );
+            Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
+            amqpMessagingConfig.rabbitTemplate().send(message);
+        } catch (AmqpException e) {
+            throw new ServiceException.ServiceUnavailable(SENDING_MESSAGE_ERROR, e);
+        } catch (IOException e) {
+            throw new ServiceException.InternalServerError(SERIALIZATION_OR_DESERIALIZATION_ERROR, e);
+        }
+    }
+
+    @Override
+    public void send(
+            @NotNull Enum<?> messageType,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            MessageProperties messageProperties
+    ) {
+        checkString(messageId);
+        try {
+            AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
+            MessageProperties customMessageProperties = MessagePropertiesBuilder
+                    .fromProperties(amqpMessagingConfig.defaultMessageProperties())
+                    .copyProperties(messageProperties)
+                    .build();
+
+            messageProperties = getMessageProperties(
+                    messageId,
+                    customMessageProperties
             );
             Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
             amqpMessagingConfig.rabbitTemplate().send(message);
@@ -101,7 +129,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(messageType);
             MessageProperties messageProperties = getMessageProperties(
                     messageId,
-                    amqpMessagingConfig.messageProperties()
+                    amqpMessagingConfig.defaultMessageProperties()
             );
             Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
             Message response = amqpMessagingConfig.rabbitTemplate().sendAndReceive(message);
@@ -116,6 +144,17 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
         } catch (IOException e) {
             throw new ServiceException.InternalServerError(SERIALIZATION_OR_DESERIALIZATION_ERROR, e);
         }
+    }
+
+    @Override
+    public <R> @NotNull R sendAndReceive(
+            @NotNull Enum<?> messageType,
+            @NotNull String messageId,
+            @NotNull Object messagePayload,
+            @NotNull Class<R> responseType,
+            MessageProperties messageProperties
+    ) {
+        throw new ServiceException.NotImplemented();
     }
 
     @Override
@@ -148,7 +187,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
                     messageId,
-                    amqpMessagingConfig.messageProperties()
+                    amqpMessagingConfig.defaultMessageProperties()
             );
             Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
             amqpMessagingConfig.rabbitTemplate().send(routingKey, message);
@@ -172,7 +211,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
                     messageId,
-                    amqpMessagingConfig.messageProperties()
+                    amqpMessagingConfig.defaultMessageProperties()
             );
             Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
             amqpMessagingConfig.rabbitTemplate().send(exchange, routingKey, message);
@@ -197,7 +236,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
                     messageId,
-                    amqpMessagingConfig.messageProperties()
+                    amqpMessagingConfig.defaultMessageProperties()
             );
             Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
             Message response = amqpMessagingConfig.rabbitTemplate().sendAndReceive(routingKey, message);
@@ -229,7 +268,7 @@ public class DefaultAmqpMessageSender implements AmqpMessageSender {
             AmqpMessagingConfig amqpMessagingConfig = getAmqpMessagingConfig(microservice);
             MessageProperties messageProperties = getMessageProperties(
                     messageId,
-                    amqpMessagingConfig.messageProperties()
+                    amqpMessagingConfig.defaultMessageProperties()
             );
             Message message = new Message(MAPPER.writeValueAsBytes(messagePayload), messageProperties);
             Message response = amqpMessagingConfig.rabbitTemplate().sendAndReceive(exchange, routingKey, message);
