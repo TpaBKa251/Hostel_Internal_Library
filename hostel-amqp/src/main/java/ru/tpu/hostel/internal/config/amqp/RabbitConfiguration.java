@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.opentelemetry.api.OpenTelemetry;
-import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -41,7 +40,6 @@ import java.util.Set;
 
 @Configuration
 @EnableConfigurationProperties(RabbitProperties.class)
-@RequiredArgsConstructor
 public class RabbitConfiguration {
 
     @Bean("customMessageConverters")

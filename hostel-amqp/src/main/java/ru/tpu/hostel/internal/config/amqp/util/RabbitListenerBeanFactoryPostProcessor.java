@@ -1,7 +1,6 @@
 package ru.tpu.hostel.internal.config.amqp.util;
 
 import io.opentelemetry.api.OpenTelemetry;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.core.AcknowledgeMode;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -31,8 +29,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-@DependsOn("customConnectionFactories")
 public class RabbitListenerBeanFactoryPostProcessor implements
         BeanDefinitionRegistryPostProcessor, Ordered, ApplicationContextAware {
 
@@ -42,16 +38,18 @@ public class RabbitListenerBeanFactoryPostProcessor implements
 
     private ConfigurableListableBeanFactory beanFactory;
 
-    private final Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories;
-
-    private final RabbitProperties rabbitProperties;
-
-    private final OpenTelemetry openTelemetry;
-
     private ApplicationContext applicationContext;
 
     @Override
     public void postProcessBeanDefinitionRegistry(@NotNull BeanDefinitionRegistry registry) {
+        RabbitProperties rabbitProperties = applicationContext.getBean(RabbitProperties.class);
+        OpenTelemetry openTelemetry = applicationContext.getBean(OpenTelemetry.class);
+
+        @SuppressWarnings("unchecked")
+        Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories =
+                (Map<Microservice, Map<String, TracedConnectionFactory>>)
+                        applicationContext.getBean("customConnectionFactories");
+
         Map<Microservice, Map<String, Map<String, String>>> listenersBeanNames = new EnumMap<>(Microservice.class);
         connectionFactories.forEach((microservice, innerMap) -> {
             Map<String, Map<String, String>> serviceMap = new HashMap<>();
@@ -87,9 +85,9 @@ public class RabbitListenerBeanFactoryPostProcessor implements
                                             .queueingProperties()
                                             .listeners()
                                             .get(listenerName)
-                                            .customizerName(),
-                                    applicationContext
-                            )
+                                            .customizerName()
+                            ),
+                            openTelemetry
                     );
 
                     log.debug("Create listener bean: {}", beanName);
@@ -117,7 +115,8 @@ public class RabbitListenerBeanFactoryPostProcessor implements
 
     private SimpleRabbitListenerContainerFactory createListenerContainerFactory(
             TracedConnectionFactory connectionFactory,
-            SimpleRabbitListenerContainerFactoryCustomizer customizer
+            SimpleRabbitListenerContainerFactoryCustomizer customizer,
+            OpenTelemetry openTelemetry
     ) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         if (customizer != null) {
@@ -132,8 +131,7 @@ public class RabbitListenerBeanFactoryPostProcessor implements
     }
 
     private SimpleRabbitListenerContainerFactoryCustomizer getCustomizer(
-            String beanName,
-            ApplicationContext applicationContext
+            String beanName
     ) {
         if (!StringUtils.hasText(beanName)) {
             return null;
