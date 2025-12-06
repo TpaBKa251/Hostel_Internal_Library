@@ -4,13 +4,16 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.opentelemetry.api.OpenTelemetry;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -18,6 +21,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -25,22 +29,29 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 import ru.tpu.hostel.internal.config.amqp.customizer.Customizer;
 import ru.tpu.hostel.internal.config.amqp.customizer.RabbitTemplateCustomizer;
+import ru.tpu.hostel.internal.config.amqp.customizer.SimpleRabbitListenerContainerFactoryCustomizer;
 import ru.tpu.hostel.internal.config.amqp.customizer.TracedConnectionFactoryCustomizer;
 import ru.tpu.hostel.internal.config.amqp.properties.RabbitConnectionProperties;
 import ru.tpu.hostel.internal.config.amqp.properties.RabbitProperties;
 import ru.tpu.hostel.internal.config.amqp.properties.RabbitSenderProperties;
 import ru.tpu.hostel.internal.config.amqp.tracing.TracedConnectionFactory;
+import ru.tpu.hostel.internal.config.amqp.tracing.interceptor.AmqpMessageReceiveInterceptor;
 import ru.tpu.hostel.internal.external.amqp.Microservice;
 
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Configuration
 @EnableConfigurationProperties(RabbitProperties.class)
 public class RabbitConfiguration {
+
+    private static final String LISTENER_POSTFIX = "RabbitListener";
 
     @Bean("customMessageConverters")
     Map<Microservice, Map<String, MessageConverter>> customMessageConverters(
@@ -147,7 +158,7 @@ public class RabbitConfiguration {
         return rabbitTemplates;
     }
 
-    @Bean
+    @Bean("customAmqpAdmins")
     Map<Microservice, Map<String, RabbitAdmin>> customAmqpAdmins(
             @Qualifier("customRabbitTemplates") Map<Microservice, Map<String, RabbitTemplate>> rabbitTemplates,
             RabbitProperties rabbitProperties
@@ -204,6 +215,85 @@ public class RabbitConfiguration {
 
         rabbitAdmin.declareQueue(queue);
         rabbitAdmin.declareBinding(binding);
+    }
+
+    @Bean("customRabbitListeners")
+    Map<Microservice, Map<String, Map<String, String>>> customRabbitListeners(
+            @Qualifier("customConnectionFactories") Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories,
+            RabbitProperties rabbitProperties,
+            ApplicationContext applicationContext,
+            OpenTelemetry openTelemetry,
+            ConfigurableListableBeanFactory beanFactory
+    ) {
+        Map<Microservice, Map<String, Map<String, String>>> listenersBeanNames = new EnumMap<>(Microservice.class);
+
+        connectionFactories.forEach((microservice, innerMap) -> {
+            Map<String, Map<String, String>> serviceMap = new HashMap<>();
+            innerMap.forEach((name, connectionFactory) -> {
+                Map<String, String> listenerToBeanNameMap = new HashMap<>();
+
+                Set<String> listenerNames = rabbitProperties.properties()
+                        .get(microservice)
+                        .get(name)
+                        .queueingProperties()
+                        .listeners()
+                        .keySet()
+                        .stream()
+                        .map(s -> Arrays.stream(s.split(" "))
+                                .map(s1 -> StringUtils.capitalize(s1.trim()))
+                                .collect(Collectors.joining())
+                        )
+                        .collect(Collectors.toSet());
+                listenerNames.forEach(listenerName -> {
+                    String beanName = microservice.name().toLowerCase()
+                            + StringUtils.capitalize(name)
+                            + listenerName
+                            + LISTENER_POSTFIX;
+
+                    listenerToBeanNameMap.put(listenerName, beanName);
+
+                    SimpleRabbitListenerContainerFactory listenerFactory = createListenerContainerFactory(
+                            connectionFactory,
+                            getBean(
+                                    rabbitProperties.properties()
+                                            .get(microservice)
+                                            .get(name)
+                                            .queueingProperties()
+                                            .listeners()
+                                            .get(listenerName)
+                                            .customizerName(),
+                                    applicationContext,
+                                    SimpleRabbitListenerContainerFactoryCustomizer.class
+                            ),
+                            openTelemetry
+                    );
+
+                    log.debug("Create listener bean: {}", beanName);
+                    beanFactory.registerSingleton(beanName, listenerFactory);
+                });
+                serviceMap.put(name, listenerToBeanNameMap);
+            });
+            listenersBeanNames.put(microservice, serviceMap);
+        });
+
+        return listenersBeanNames;
+    }
+
+    private SimpleRabbitListenerContainerFactory createListenerContainerFactory(
+            TracedConnectionFactory connectionFactory,
+            SimpleRabbitListenerContainerFactoryCustomizer customizer,
+            OpenTelemetry openTelemetry
+    ) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        if (customizer != null) {
+            customizer.customize(factory);
+        }
+        factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
+        factory.setDefaultRequeueRejected(false);
+        factory.setConnectionFactory(connectionFactory);
+        factory.setAdviceChain(new AmqpMessageReceiveInterceptor(openTelemetry));
+
+        return factory;
     }
 
     @Bean
