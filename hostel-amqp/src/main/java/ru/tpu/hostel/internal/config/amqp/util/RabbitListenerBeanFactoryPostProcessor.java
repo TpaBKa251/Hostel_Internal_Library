@@ -3,12 +3,17 @@ package ru.tpu.hostel.internal.config.amqp.util;
 import io.opentelemetry.api.OpenTelemetry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import ru.tpu.hostel.internal.config.amqp.customizer.SimpleRabbitListenerContainerFactoryCustomizer;
@@ -27,13 +32,15 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RabbitListenerBeanFactoryPostProcessor implements SmartInitializingSingleton {
+@DependsOn("customConnectionFactories")
+public class RabbitListenerBeanFactoryPostProcessor implements
+        BeanDefinitionRegistryPostProcessor, Ordered, ApplicationContextAware {
 
     private static final String LISTENER_POSTFIX = "RabbitListener";
 
     private static final String LISTENERS_BEAN_NAMES_BEAN_NAME = "rabbitListenersBeanNames";
 
-    private final ConfigurableListableBeanFactory beanFactory;
+    private ConfigurableListableBeanFactory beanFactory;
 
     private final Map<Microservice, Map<String, TracedConnectionFactory>> connectionFactories;
 
@@ -41,10 +48,10 @@ public class RabbitListenerBeanFactoryPostProcessor implements SmartInitializing
 
     private final OpenTelemetry openTelemetry;
 
-    private final ApplicationContext applicationContext;
+    private ApplicationContext applicationContext;
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void postProcessBeanDefinitionRegistry(@NotNull BeanDefinitionRegistry registry) {
         Map<Microservice, Map<String, Map<String, String>>> listenersBeanNames = new EnumMap<>(Microservice.class);
         connectionFactories.forEach((microservice, innerMap) -> {
             Map<String, Map<String, String>> serviceMap = new HashMap<>();
@@ -85,7 +92,7 @@ public class RabbitListenerBeanFactoryPostProcessor implements SmartInitializing
                             )
                     );
 
-                    log.info("Create listener bean: {}", beanName);
+                    log.debug("Create listener bean: {}", beanName);
                     beanFactory.registerSingleton(beanName, listenerFactory);
                 });
                 serviceMap.put(name, listenerToBeanNameMap);
@@ -94,6 +101,18 @@ public class RabbitListenerBeanFactoryPostProcessor implements SmartInitializing
         });
 
         beanFactory.registerSingleton(LISTENERS_BEAN_NAMES_BEAN_NAME, listenersBeanNames);
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        this.beanFactory = (ConfigurableListableBeanFactory)
+                applicationContext.getAutowireCapableBeanFactory();
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE + 10;
     }
 
     private SimpleRabbitListenerContainerFactory createListenerContainerFactory(
