@@ -21,7 +21,10 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -270,6 +273,8 @@ public class RabbitConfiguration {
 
                     log.debug("Create listener bean: {}", beanName);
                     beanFactory.registerSingleton(beanName, listenerFactory);
+                    beanFactory.autowireBean(listenerFactory);          // @Autowired и пр.
+                    beanFactory.initializeBean(listenerFactory, beanName); // BeanPostProcessor'ы
                 });
                 serviceMap.put(name, listenerToBeanNameMap);
             });
@@ -313,6 +318,7 @@ public class RabbitConfiguration {
                             .queueingProperties()
                             .senders();
 
+                    applicationContext.getBeansOfType(RabbitTemplateCustomizer.class);
                     senders.forEach((type, senderProperties) -> {
                         RabbitTemplateCustomizer rabbitTemplateCustomizer = getBean(
                                 senderProperties.rabbitTemplateCustomizerName(),
