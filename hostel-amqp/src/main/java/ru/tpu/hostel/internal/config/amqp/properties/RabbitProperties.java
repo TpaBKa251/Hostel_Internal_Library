@@ -7,6 +7,11 @@ import ru.tpu.hostel.internal.external.amqp.Microservice;
 
 import java.util.Map;
 
+/**
+ * Свойства для настройки RabbitMQ.
+ *
+ * @param properties свойства.
+ */
 @ConfigurationProperties(prefix = "rabbitmq")
 @Validated
 public record RabbitProperties(

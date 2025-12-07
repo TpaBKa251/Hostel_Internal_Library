@@ -5,6 +5,12 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.Map;
 
+/**
+ * Свойства очередей.
+ *
+ * @param listeners набор параметров для слушателя.
+ * @param senders   набор параметров для отправителей.
+ */
 @Validated
 public record RabbitQueueingProperties(
 

@@ -21,10 +21,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +32,7 @@ import ru.tpu.hostel.internal.config.amqp.customizer.RabbitTemplateCustomizer;
 import ru.tpu.hostel.internal.config.amqp.customizer.SimpleRabbitListenerContainerFactoryCustomizer;
 import ru.tpu.hostel.internal.config.amqp.customizer.TracedConnectionFactoryCustomizer;
 import ru.tpu.hostel.internal.config.amqp.properties.RabbitConnectionProperties;
+import ru.tpu.hostel.internal.config.amqp.properties.RabbitListenerProperties;
 import ru.tpu.hostel.internal.config.amqp.properties.RabbitProperties;
 import ru.tpu.hostel.internal.config.amqp.properties.RabbitSenderProperties;
 import ru.tpu.hostel.internal.config.amqp.tracing.TracedConnectionFactory;
@@ -179,7 +177,7 @@ public class RabbitConfiguration {
                 );
 
                 serviceProperties.queueingProperties().listeners().forEach((_, listener) ->
-                        initQueue(rabbitAdmin, listener.queueName())
+                        initQueue(rabbitAdmin, listener)
                 );
             });
             amqpAdmins.put(microservice, rabbitAdminMap);
@@ -198,6 +196,18 @@ public class RabbitConfiguration {
         rabbitAdmin.declareQueue(queue);
         rabbitAdmin.declareExchange(exchange);
         declareAndBindQueue(rabbitAdmin, rabbitSenderProperties.routingKey(), exchange, queue);
+    }
+
+    private void initQueue(RabbitAdmin rabbitAdmin, RabbitListenerProperties rabbitListenerProperties) {
+        DirectExchange exchange = new DirectExchange(rabbitListenerProperties.exchangeName());
+
+        Queue queue = QueueBuilder.durable(rabbitListenerProperties.queueName())
+                .quorum()
+                .build();
+
+        rabbitAdmin.declareQueue(queue);
+        rabbitAdmin.declareExchange(exchange);
+        declareAndBindQueue(rabbitAdmin, rabbitListenerProperties.routingKey(), exchange, queue);
     }
 
     private void initQueue(RabbitAdmin rabbitAdmin, String queueName) {
@@ -271,7 +281,9 @@ public class RabbitConfiguration {
                             openTelemetry
                     );
 
-                    log.debug("Create listener bean: {}", beanName);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Create listener bean: {}", beanName);
+                    }
                     beanFactory.registerSingleton(beanName, listenerFactory);
                     beanFactory.autowireBean(listenerFactory);          // @Autowired и пр.
                     beanFactory.initializeBean(listenerFactory, beanName); // BeanPostProcessor'ы
