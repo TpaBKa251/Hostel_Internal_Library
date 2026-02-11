@@ -288,7 +288,7 @@ public enum Roles {
      * @param roles коллекция ролей
      * @return старшую роль
      */
-    private static Roles getSeniorRole(Collection<Roles> roles) {
+    public static Roles getSeniorRole(Collection<Roles> roles) {
         if (roles == null || roles.isEmpty()) {
             return null;
         }
